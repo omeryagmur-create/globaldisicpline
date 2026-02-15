@@ -11,6 +11,7 @@ import {
     BarChart2,
     Users,
     MessageSquare,
+    Gift,
     Crown,
     Settings,
 } from "lucide-react";
