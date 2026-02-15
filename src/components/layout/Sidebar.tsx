@@ -49,15 +49,20 @@ export function Sidebar({ className }: SidebarProps) {
             href: "/mock-analysis",
         },
         {
-            title: "Community",
+            title: "Study Groups",
             icon: Users,
-            href: "/community",
+            href: "/groups",
         },
         {
             title: "Premium",
             icon: Crown,
             href: "/premium",
             variant: "premium",
+        },
+        {
+            title: "Profile",
+            icon: Settings,
+            href: "/profile",
         },
     ];
 

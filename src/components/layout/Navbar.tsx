@@ -2,7 +2,8 @@
 
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { Zap, Moon, Sun, Bell, User as UserIcon, LogOut } from "lucide-react";
+import { Zap, Moon, Sun, Bell, User as UserIcon, LogOut, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -72,29 +73,27 @@ export function Navbar() {
                             <span className="sr-only">Toggle theme</span>
                         </Button>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="relative">
-                                    <Bell className="h-5 w-5" />
-                                    <span className="sr-only">Notifications</span>
-                                    {/* Badge logic here */}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>No new notifications</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="relative"
+                            onClick={() => router.push("/notifications")}
+                        >
+                            <Bell className="h-5 w-5" />
+                            <span className="sr-only">Notifications Center</span>
+                            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
+                        </Button>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                                    <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                                <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-primary/20 p-0 hover:bg-primary/5">
+                                    <div className="flex h-full w-full items-center justify-center rounded-full overflow-hidden">
                                         {profile?.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
+                                            <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
                                         ) : (
-                                            <UserIcon className="h-4 w-4" />
+                                            <div className="bg-primary/10 h-full w-full flex items-center justify-center">
+                                                <UserIcon className="h-5 w-5 text-primary" />
+                                            </div>
                                         )}
                                     </div>
                                 </Button>
@@ -102,21 +101,25 @@ export function Navbar() {
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">{profile?.full_name || "User"}</p>
+                                        <p className="text-sm font-medium leading-none">{profile?.full_name || "Account"}</p>
                                         <p className="text-xs leading-none text-muted-foreground">
-                                            {profile?.email}
+                                            {profile?.email || "Manage your settings"}
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link href="/profile">Profile</Link>
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                    <Link href="/profile" className="flex items-center">
+                                        <UserIcon className="mr-2 h-4 w-4" /> Profile Details
+                                    </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/settings">Settings</Link>
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                    <Link href="/groups" className="flex items-center">
+                                        <Users className="mr-2 h-4 w-4" /> My Groups
+                                    </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
                                     <LogOut className="mr-2 h-4 w-4" />
                                     Log out
                                 </DropdownMenuItem>
