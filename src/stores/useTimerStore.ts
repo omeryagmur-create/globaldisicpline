@@ -5,7 +5,7 @@ interface TimerState {
     isRunning: boolean;
     timeLeft: number;
     initialTime: number;
-    sessionType: 'pomodoro' | 'short_break' | 'long_break' | 'custom';
+    sessionType: 'pomodoro' | 'short_break' | 'long_break' | 'custom' | 'survival' | 'deep_focus';
     subject: string | null;
     startedAt: number | null;
 

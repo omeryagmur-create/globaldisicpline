@@ -2,6 +2,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { StreakDisplay } from "@/components/dashboard/StreakDisplay";
 import { XPProgress } from "@/components/dashboard/XPProgress";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { DailyMissions } from "@/components/dashboard/DailyMissions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Clock, Trophy, Target, Star, Calendar } from "lucide-react";
@@ -156,6 +157,7 @@ export default async function DashboardPage() {
                         currentStreak={profile.current_streak}
                         longestStreak={profile.longest_streak}
                     />
+                    <DailyMissions />
                     {/* Add more widgets here like Daily Goal or Next Exam Countdown */}
                 </div>
             </div>

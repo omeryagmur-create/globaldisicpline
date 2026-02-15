@@ -2,12 +2,25 @@
 
 import { useEffect } from "react";
 import { useTimerStore } from "@/stores/useTimerStore";
+import { useUserStore } from "@/stores/useUserStore";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 
 export function TimerLogic() {
     const { isRunning, timeLeft, tick, sessionType, initialTime, reset } = useTimerStore();
     const supabase = createClient();
+
+    useEffect(() => {
+        return () => {
+            // On unmount or if logic stops - check if survival was active
+            if (sessionType === 'survival' && isRunning && timeLeft > 0) {
+                // This is a "failure" of survival mode
+                toast.error("Survival Mode Failed! No XP earned.", {
+                    icon: "💀",
+                });
+            }
+        };
+    }, []);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -22,7 +35,7 @@ export function TimerLogic() {
         }
 
         return () => clearInterval(interval);
-    }, [isRunning, timeLeft, tick]);
+    }, [isRunning, timeLeft, tick, sessionType]);
 
     const handleCompletion = async () => {
         // 1. Play sound
@@ -56,6 +69,9 @@ export function TimerLogic() {
                     p_user_id: user.id,
                     p_xp_amount: xpEarned
                 });
+
+                // Refresh profile to update XP/Level in navbar/dashboard
+                await useUserStore.getState().fetchProfile();
             }
         }
 
@@ -64,9 +80,9 @@ export function TimerLogic() {
     };
 
     const calculateXP = (minutes: number, type: string) => {
-        // Simple logic: 1 min = 1 XP. Bonus for deep work?
         let multiplier = 1;
-        if (type === 'deep_work') multiplier = 1.5;
+        if (type === 'deep_focus') multiplier = 1.5;
+        if (type === 'survival') multiplier = 2.0;
         return Math.round(minutes * multiplier);
     };
 

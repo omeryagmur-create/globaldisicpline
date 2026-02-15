@@ -3,7 +3,7 @@
 import { useTimerStore } from "@/stores/useTimerStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Coffee, Brain, Timer } from "lucide-react";
+import { Coffee, Brain, Timer, Zap, ShieldAlert } from "lucide-react";
 
 export function FocusModeSelector() {
     const { sessionType, setSession } = useTimerStore();
@@ -17,18 +17,25 @@ export function FocusModeSelector() {
             color: "bg-primary text-primary-foreground",
         },
         {
+            type: "deep_focus",
+            label: "Deep Focus (1.5x XP)",
+            duration: 50 * 60,
+            icon: Zap,
+            color: "bg-purple-600 text-white",
+        },
+        {
+            type: "survival",
+            label: "Survival (2.0x XP)",
+            duration: 25 * 60,
+            icon: ShieldAlert,
+            color: "bg-red-600 text-white",
+        },
+        {
             type: "short_break",
             label: "Short Break",
             duration: 5 * 60,
             icon: Coffee,
             color: "bg-emerald-500 text-white",
-        },
-        {
-            type: "long_break",
-            label: "Long Break",
-            duration: 15 * 60,
-            icon: Coffee,
-            color: "bg-blue-500 text-white",
         },
     ];
 

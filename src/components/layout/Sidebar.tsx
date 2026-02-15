@@ -39,6 +39,11 @@ export function Sidebar({ className }: SidebarProps) {
             href: "/leaderboard",
         },
         {
+            title: "Rewards",
+            icon: Gift,
+            href: "/rewards",
+        },
+        {
             title: "Study Planner",
             icon: BookOpen,
             href: "/planner",

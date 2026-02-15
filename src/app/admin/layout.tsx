@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Navbar } from "@/components/layout/Navbar";
+import { ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminLayout({
     children,
@@ -46,8 +48,17 @@ export default function AdminLayout({
         );
     }
 
-    if (!isAuthorized) {
-        return null;
+    if (!isAuthorized && !loading) {
+        return (
+            <div className="flex flex-col h-screen w-full items-center justify-center space-y-4">
+                <ShieldAlert className="h-12 w-12 text-destructive" />
+                <h1 className="text-2xl font-bold">Unauthorized Access</h1>
+                <p className="text-muted-foreground text-center max-w-md">
+                    You do not have administrative privileges. If you believe this is an error, please contact support or check your database status.
+                </p>
+                <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
+            </div>
+        );
     }
 
     return (
