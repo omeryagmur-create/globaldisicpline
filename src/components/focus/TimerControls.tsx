@@ -12,7 +12,7 @@ export function TimerControls() {
             <Button
                 variant="outline"
                 size="lg"
-                onClick={isRunning ? pause : start}
+                onClick={() => isRunning ? pause() : start()}
                 className="w-32 h-14 rounded-full text-lg font-semibold border-2 hover:border-primary transition-all shadow-lg shadow-primary/10"
             >
                 {isRunning ? (
