@@ -3,7 +3,9 @@ import { TimerDisplay } from "@/components/focus/TimerDisplay";
 import { TimerControls } from "@/components/focus/TimerControls";
 import { FocusModeSelector } from "@/components/focus/FocusModeSelector";
 import { SessionHistory } from "@/components/focus/SessionHistory";
+import { FocusModeBuilder } from "@/components/focus/FocusModeBuilder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -31,26 +33,36 @@ export default async function FocusPage() {
     const { history } = await getFocusData();
 
     return (
-        <div className="container mx-auto max-w-4xl py-8">
-            <div className="text-center mb-8">
+        <div className="container mx-auto max-w-4xl py-8 space-y-12">
+            <div className="text-center">
                 <h1 className="text-4xl font-extrabold tracking-tight mb-2">Focus Mode</h1>
-                <p className="text-muted-foreground">Choose a mode and start your session.</p>
+                <p className="text-muted-foreground text-lg italic">"Ayrıcalık disiplini takip eder."</p>
             </div>
 
-            <Card className="mb-8 overflow-hidden relative">
+            <Card className="overflow-hidden relative shadow-2xl border-primary/20">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-                <CardContent className="p-8 md:p-12 flex flex-col items-center justify-center space-y-8 relative z-10">
+                <CardContent className="p-8 md:p-12 flex flex-col items-center justify-center space-y-10 relative z-10">
                     <FocusModeSelector />
-                    <TimerDisplay size={320} strokeWidth={16} />
+                    <div className="relative group">
+                        <div className="absolute -inset-4 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                        <TimerDisplay size={340} strokeWidth={14} />
+                    </div>
                     <TimerControls />
                 </CardContent>
             </Card>
 
-            <div className="grid gap-8 md:grid-cols-2">
-                <div className="md:col-span-2">
+            <Tabs defaultValue="history" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-8">
+                    <TabsTrigger value="history">Session History</TabsTrigger>
+                    <TabsTrigger value="builder">Engine Builder (v3.5)</TabsTrigger>
+                </TabsList>
+                <TabsContent value="history">
                     <SessionHistory history={history} />
-                </div>
-            </div>
+                </TabsContent>
+                <TabsContent value="builder">
+                    <FocusModeBuilder />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

@@ -14,6 +14,7 @@ import {
     Gift,
     Crown,
     Settings,
+    Rocket,
 } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -48,6 +49,11 @@ export function Sidebar({ className }: SidebarProps) {
             title: "Study Planner",
             icon: BookOpen,
             href: "/planner",
+        },
+        {
+            title: "Self Development",
+            icon: Rocket,
+            href: "/self-development",
         },
         {
             title: "Mock Analysis",

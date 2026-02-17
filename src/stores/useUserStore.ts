@@ -2,15 +2,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Profile, Restriction } from '@/types/user';
 import { createClient } from '@/lib/supabase/client';
+import { realtimeManager } from '@/lib/events/RealtimeManager';
+import { calculateLeague, LeagueTier } from '@/lib/leagues';
 
 interface UserState {
     profile: Profile | null;
     loading: boolean;
     activeRestrictions: Restriction[];
+    league: LeagueTier;
 
     setProfile: (profile: Profile | null) => void;
     fetchProfile: () => Promise<void>;
     updateProfile: (updates: Partial<Profile>) => Promise<void>;
+    addXP: (amount: number, reason: string) => Promise<void>;
     checkRestrictions: () => Promise<void>;
     logout: () => Promise<void>;
     isRestricted: (feature: string) => boolean;
@@ -22,8 +26,17 @@ export const useUserStore = create<UserState>()(
             profile: null,
             loading: false,
             activeRestrictions: [],
+            league: 'Bronze',
 
-            setProfile: (profile) => set({ profile }),
+            setProfile: (profile) => {
+                if (profile) {
+                    const consistency = profile.current_streak / 30; // 30 day normalization
+                    const league = calculateLeague(profile.total_xp, consistency);
+                    set({ profile, league });
+                } else {
+                    set({ profile: null, league: 'Bronze' });
+                }
+            },
 
             fetchProfile: async () => {
                 set({ loading: true });
@@ -33,7 +46,7 @@ export const useUserStore = create<UserState>()(
                     const { data: { user } } = await supabase.auth.getUser();
 
                     if (!user) {
-                        set({ profile: null, loading: false });
+                        set({ profile: null, league: 'Bronze', loading: false });
                         return;
                     }
 
@@ -48,7 +61,10 @@ export const useUserStore = create<UserState>()(
                         return;
                     }
 
-                    set({ profile });
+                    const consistency = profile.current_streak / 30;
+                    const league = calculateLeague(profile.total_xp, consistency);
+
+                    set({ profile, league });
                     await get().checkRestrictions();
                 } catch (error) {
                     console.error('Error in fetchProfile:', error);
@@ -72,7 +88,36 @@ export const useUserStore = create<UserState>()(
                     throw error;
                 }
 
-                set({ profile: { ...profile, ...updates } });
+                const newProfile = { ...profile, ...updates };
+                const consistency = newProfile.current_streak / 30;
+                const newLeague = calculateLeague(newProfile.total_xp, consistency);
+
+                if (newLeague !== get().league) {
+                    realtimeManager.publish({
+                        type: newLeague === 'Bronze' ? 'LeagueDemotion' : 'LeaguePromotion',
+                        payload: { league: newLeague }
+                    });
+                }
+
+                set({ profile: newProfile, league: newLeague });
+            },
+
+            addXP: async (amount: number, reason: string) => {
+                const { profile } = get();
+                if (!profile) return;
+
+                const newXP = (profile.total_xp || 0) + amount;
+
+                await get().updateProfile({ total_xp: newXP });
+
+                realtimeManager.publish({
+                    type: 'XPUpdated',
+                    payload: {
+                        totalXp: newXP,
+                        change: amount,
+                        reason
+                    }
+                });
             },
 
             checkRestrictions: async () => {
@@ -90,14 +135,12 @@ export const useUserStore = create<UserState>()(
             logout: async () => {
                 const supabase = createClient();
                 await supabase.auth.signOut();
-                set({ profile: null, activeRestrictions: [] });
+                set({ profile: null, activeRestrictions: [], league: 'Bronze' });
             },
 
             isRestricted: (feature) => {
                 const { activeRestrictions } = get();
                 return activeRestrictions.some(r =>
-                    // Need to cast to any or fix type if Restriction interface doesn't have features array
-                    // Assuming Restriction type in @/types/user matches ActiveRestriction from constants
                     (r as any).features?.includes(feature) ||
                     (r as any).features?.includes('all_premium_features') ||
                     (r as any).features?.includes('social_features_disabled')
