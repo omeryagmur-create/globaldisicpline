@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export interface SliderProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value'> {
     onValueChange?: (value: number[]) => void;
     value?: number[];
 }
@@ -18,7 +18,7 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
                     "w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-primary",
                     className
                 )}
-                value={value?.[0]}
+                value={value?.[0] ?? ""}
                 onChange={(e) => onValueChange?.([parseInt(e.target.value)])}
                 {...props}
             />
