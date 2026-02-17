@@ -193,8 +193,10 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            );
+                        })}
                     </TableBody>
+
                 </Table>
             </div>
 
