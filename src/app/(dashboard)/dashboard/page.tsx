@@ -21,7 +21,18 @@ async function getDashboardData() {
         return redirect("/login");
     }
 
-    const [profileResult, statsResult, sessionsResult] = await Promise.all([
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
+
+    const [
+        profileResult,
+        statsResult,
+        recentSessionsResult,
+        totalSessionsResult,
+        todaySessionsResult,
+        yesterdaySessionsResult
+    ] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
         supabase.rpc("get_total_study_minutes", { p_user_id: user.id }),
         supabase.from("focus_sessions")
@@ -30,54 +41,59 @@ async function getDashboardData() {
             .eq("is_completed", true)
             .order("created_at", { ascending: false })
             .limit(5),
+        supabase.from("focus_sessions")
+            .select("*", { count: 'exact', head: true })
+            .eq("user_id", user.id)
+            .eq("is_completed", true),
+        supabase.from("focus_sessions")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("is_completed", true)
+            .gte("completed_at", startOfToday),
+        supabase.from("focus_sessions")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("is_completed", true)
+            .gte("completed_at", startOfYesterday)
+            .lt("completed_at", startOfToday),
     ]);
 
+    let profile = profileResult.data;
     if (profileResult.error) {
-        console.error("Profile error:", profileResult.error);
-
-        // Attempt self-healing: Create profile if missing
-        const { data: newProfile, error: createError } = await supabase
+        // Attempt self-healing
+        const { data: newProfile } = await supabase
             .from("profiles")
             .upsert({
                 id: user.id,
                 email: user.email!,
                 full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-                total_xp: 0,
-                current_level: 1,
-                subscription_tier: 'free',
-                tier: 'bronze',
-                current_streak: 0,
-                longest_streak: 0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
             })
             .select()
             .single();
-
-        if (createError) {
-            console.error("Failed to recover profile:", createError);
-            // Return minimal data to prevent page crash, UI will show error
-            return { user, profile: null, totalMinutes: 0, recentSessions: [] };
-        }
-
-        return {
-            user,
-            profile: newProfile,
-            totalMinutes: statsResult.data || 0,
-            recentSessions: sessionsResult.data || [],
-        };
+        profile = newProfile;
     }
 
     return {
         user,
-        profile: profileResult.data,
+        profile,
         totalMinutes: statsResult.data || 0,
-        recentSessions: sessionsResult.data || [],
+        recentSessions: recentSessionsResult.data || [],
+        totalSessions: totalSessionsResult.count || 0,
+        todaySessions: todaySessionsResult.data || [],
+        yesterdaySessions: yesterdaySessionsResult.data || [],
     };
 }
 
 export default async function DashboardPage() {
-    const { user, profile, totalMinutes, recentSessions } = await getDashboardData();
+    const {
+        user,
+        profile,
+        totalMinutes,
+        recentSessions,
+        totalSessions,
+        todaySessions,
+        yesterdaySessions
+    } = await getDashboardData();
 
     if (!profile) {
         return (
@@ -87,16 +103,64 @@ export default async function DashboardPage() {
         );
     }
 
-    // Calculate stats
+    // Calculate Focus Time Stats
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
     const hoursDisplay = `${totalHours}h ${remainingMinutes}m`;
 
-    // XP Logic (simplified)
-    const currentXP = profile.total_xp || 0;
-    const currentLevel = profile.current_level || 1;
-    const nextLevelXP = currentLevel * 1000; // Example: 1000 XP per level
-    const progress = (currentXP % 1000) / 1000 * 100; // Example progress
+    const todayMinutes = todaySessions.reduce((acc: number, s: any) => acc + s.duration_minutes, 0);
+    const yesterdayMinutes = yesterdaySessions.reduce((acc: number, s: any) => acc + s.duration_minutes, 0);
+
+    let trend: string;
+    let trendType: 'up' | 'down' | 'neutral';
+
+    if (yesterdayMinutes === 0) {
+        trend = todayMinutes > 0 ? "First sessions!" : "Start today!";
+        trendType = "neutral";
+    } else {
+        const diff = todayMinutes - yesterdayMinutes;
+        const percent = Math.round((diff / yesterdayMinutes) * 100);
+        trendType = diff >= 0 ? "up" : "down";
+        trend = `${Math.abs(percent)}% ${diff >= 0 ? 'increase' : 'decrease'}`;
+    }
+
+    // XP Logic (aligned with DB: Level = floor(sqrt(total_xp / 100)) + 1)
+    const currentXP = Number(profile.total_xp || 0);
+    const currentLevel = Math.floor(Math.sqrt(currentXP / 100)) + 1;
+    const xpForCurrentLevel = Math.pow(currentLevel - 1, 2) * 100;
+    const xpForNextLevel = Math.pow(currentLevel, 2) * 100;
+    const xpInThisLevel = currentXP - xpForCurrentLevel;
+    const xpNeededForNextLevel = xpForNextLevel - xpForCurrentLevel;
+    const progress = Math.min(100, Math.max(0, (xpInThisLevel / xpNeededForNextLevel) * 100));
+
+    // Missions Logic
+    const hasDeepFocusToday = todaySessions.some((s: any) => s.session_type === 'deep_focus');
+    const missions = [
+        {
+            id: "m1",
+            title: "Deep Work Initiation",
+            desc: "Complete one session in Deep Focus mode",
+            reward: 150,
+            progress: hasDeepFocusToday ? 100 : 0,
+            isCompleted: hasDeepFocusToday
+        },
+        {
+            id: "m2",
+            title: "Discipline Master",
+            desc: "Study for 2 hours (120 min) today",
+            reward: 300,
+            progress: Math.min(100, Math.round((todayMinutes / 120) * 100)),
+            isCompleted: todayMinutes >= 120
+        },
+        {
+            id: "m3",
+            title: "Consistency King",
+            desc: "Complete at least 3 sessions today",
+            reward: 100,
+            progress: Math.min(100, Math.round((todaySessions.length / 3) * 100)),
+            isCompleted: todaySessions.length >= 3
+        }
+    ];
 
     return (
         <div className="space-y-8">
@@ -112,15 +176,15 @@ export default async function DashboardPage() {
                     title="Total Focus Time"
                     value={hoursDisplay}
                     icon={Clock}
-                    trend="+2.5h"
-                    trendType="up"
+                    trend={trend}
+                    trendType={trendType}
                     color="text-blue-500"
                 />
                 <StatsCard
                     title="Current Streak"
                     value={`${profile.current_streak} days`}
                     icon={Target}
-                    trend="Keep it up!"
+                    trend={`Longest: ${profile.longest_streak}d`}
                     trendType="neutral"
                     color="text-orange-500"
                 />
@@ -134,9 +198,9 @@ export default async function DashboardPage() {
                 />
                 <StatsCard
                     title="Sessions Completed"
-                    value={recentSessions.length.toString()} // This should be total count ideally
+                    value={totalSessions.toString()}
                     icon={Calendar}
-                    trend="Last 7 days"
+                    trend={`${todaySessions.length} today`}
                     trendType="neutral"
                     color="text-purple-500"
                 />
@@ -148,7 +212,7 @@ export default async function DashboardPage() {
                         currentXP={currentXP}
                         currentLevel={currentLevel}
                         progress={progress}
-                        nextLevelXP={nextLevelXP}
+                        nextLevelXP={xpForNextLevel}
                     />
                     <RecentActivity sessions={recentSessions} />
                 </div>
@@ -157,8 +221,7 @@ export default async function DashboardPage() {
                         currentStreak={profile.current_streak}
                         longestStreak={profile.longest_streak}
                     />
-                    <DailyMissions />
-                    {/* Add more widgets here like Daily Goal or Next Exam Countdown */}
+                    <DailyMissions missions={missions} />
                 </div>
             </div>
         </div>

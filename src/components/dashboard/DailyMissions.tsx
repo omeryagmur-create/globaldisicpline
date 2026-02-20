@@ -6,37 +6,23 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const MISSIONS = [
-    {
-        id: "m1",
-        title: "Deep Work Initiation",
-        desc: "Complete one session in Deep Focus mode",
-        reward: 150,
-        progress: 100,
-        isCompleted: true
-    },
-    {
-        id: "m2",
-        title: "Discipline Master",
-        desc: "Study for 2 hours today",
-        reward: 300,
-        progress: 45,
-        isCompleted: false
-    },
-    {
-        id: "m3",
-        title: "Social Scholar",
-        desc: "Join a new study group",
-        reward: 100,
-        progress: 0,
-        isCompleted: false
-    }
-];
+export interface Mission {
+    id: string;
+    title: string;
+    desc: string;
+    reward: number;
+    progress: number;
+    isCompleted: boolean;
+}
 
-export function DailyMissions() {
-    const totalMissions = MISSIONS.length;
-    const completedMissions = MISSIONS.filter(m => m.isCompleted).length;
-    const overallProgress = (completedMissions / totalMissions) * 100;
+interface DailyMissionsProps {
+    missions: Mission[];
+}
+
+export function DailyMissions({ missions }: DailyMissionsProps) {
+    const totalMissions = missions.length;
+    const completedMissions = missions.filter(m => m.isCompleted).length;
+    const overallProgress = totalMissions > 0 ? (completedMissions / totalMissions) * 100 : 0;
 
     return (
         <Card className="overflow-hidden border-2 border-primary/10">
@@ -59,7 +45,7 @@ export function DailyMissions() {
             </CardHeader>
             <CardContent className="p-0">
                 <div className="divide-y divide-muted/50">
-                    {MISSIONS.map((mission) => (
+                    {missions.map((mission) => (
                         <div
                             key={mission.id}
                             className={cn(
