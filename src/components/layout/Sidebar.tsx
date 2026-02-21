@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { useUserStore } from "@/stores/useUserStore";
+import { useEffect } from "react";
 import {
     LayoutDashboard,
     Timer,
@@ -29,7 +30,14 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
     const { t } = useLanguage();
-    const { profile } = useUserStore();
+    const { profile, fetchProfile } = useUserStore();
+
+    // Ensure we have the latest profile data on mount to catch admin status changes
+    useEffect(() => {
+        if (!profile) {
+            fetchProfile();
+        }
+    }, [profile, fetchProfile]);
 
     interface SidebarItem {
         title: string;
@@ -48,8 +56,8 @@ export function Sidebar({ className }: SidebarProps) {
         { title: t.sidebar.profile, icon: Settings, href: "/profile", color: "text-slate-400" }
     ];
 
-    // Push Admin link only if user is admin
-    if (profile?.is_admin) {
+    // ✅ STRICT CHECK: Only show System Control if profile exists AND is_admin is exactly true
+    if (profile?.is_admin === true) {
         accountItems.push({
             title: "System Control",
             icon: ShieldCheck,
