@@ -13,7 +13,7 @@ export class AnalyticsService {
     /**
      * Track a user event in the database for analytics and retention tracking.
      */
-    static async trackEvent(eventType: EventType, eventData: Record<string, any> = {}): Promise<void> {
+    static async trackEvent(eventType: EventType, eventData: Record<string, unknown> = {}): Promise<void> {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 

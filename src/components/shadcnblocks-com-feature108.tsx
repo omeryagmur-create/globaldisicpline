@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
 import { Layout, Pointer, Zap } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -122,11 +123,14 @@ const Feature108 = ({
                     {tab.content.buttonText}
                   </Button>
                 </div>
-                <img
-                  src={tab.content.imageSrc}
-                  alt={tab.content.imageAlt}
-                  className="rounded-xl"
-                />
+                <div className="relative w-full h-96 lg:h-[500px]">
+                  <Image
+                    src={tab.content.imageSrc}
+                    alt={tab.content.imageAlt || "Feature image"}
+                    fill
+                    className="rounded-xl object-cover"
+                  />
+                </div>
               </TabsContent>
             ))}
           </div>

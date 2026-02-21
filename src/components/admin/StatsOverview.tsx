@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { Users, Clock, TrendingUp, DollarSign } from "lucide-react";
 
 export function StatsOverview() {
     // Mock data

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const formSchema = z.object({
@@ -58,7 +58,7 @@ export function SignupForm() {
             toast.success(t.auth.successSignup);
             router.push("/dashboard");
             router.refresh();
-        } catch (error) {
+        } catch (_error) {
             toast.error(t.auth.errorUnexpected);
         } finally {
             setIsLoading(false);
@@ -214,7 +214,7 @@ export function SignupForm() {
                         <div className="pt-8 border-t border-white/10">
                             <div className="flex items-center -space-x-3 mb-4">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <img key={i} src={`https://www.shadcnblocks.com/images/block/avatar-${i}.webp`} className="size-10 rounded-full border-2 border-[#121421]" />
+                                    <Image key={i} src={`https://www.shadcnblocks.com/images/block/avatar-${i}.webp`} alt={`Avatar ${i}`} width={40} height={40} className="size-10 rounded-full border-2 border-[#121421] object-cover" />
                                 ))}
                             </div>
                             <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">{t.auth.activePerformers}</p>

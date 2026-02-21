@@ -1,6 +1,5 @@
 "use client";
 
-import { useSelfDevStore } from "@/stores/useSelfDevStore";
 import { useTimerStore } from "@/stores/useTimerStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import {
     Plus,
     Clock,
-    Tag,
     Play,
     CheckCircle2,
     Circle,
@@ -74,7 +72,7 @@ export function TaskEngine() {
                         <select
                             className="bg-background border rounded-md px-2 py-1 text-xs font-bold uppercase tracking-widest"
                             value={priority}
-                            onChange={(e) => setPriority(e.target.value as any)}
+                            onChange={(e) => setPriority(e.target.value as 'Low' | 'Medium' | 'High')}
                         >
                             <option>Low</option>
                             <option>Medium</option>

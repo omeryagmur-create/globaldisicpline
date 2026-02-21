@@ -1,6 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { StudyPlan, DailyTask } from '@/types/user'; // Ensure these are exported from user/database types
-import { Database } from '@/types/database';
 
 export class PlannerService {
     static async getStudyPlans(supabase: SupabaseClient, userId: string): Promise<StudyPlan[]> {
@@ -49,7 +48,7 @@ export class PlannerService {
         return data as DailyTask[];
     }
 
-    static async createStudyPlan(supabase: SupabaseClient, userId: string, data: any): Promise<void> {
+    static async createStudyPlan(supabase: SupabaseClient, userId: string, data: { examDate: string, totalWeeks: number, subjects: string[], dailyHours: number, tasks: { task_date: string, subject: string, topic: string, estimated_duration: number }[] }): Promise<void> {
         // Deactivate existing
         await supabase
             .from("study_plans")
@@ -76,7 +75,7 @@ export class PlannerService {
         }
 
         // Create tasks
-        const tasks = data.tasks.map((task: any) => ({
+        const tasks = data.tasks.map((task: { task_date: string, subject: string, topic: string, estimated_duration: number }) => ({
             user_id: userId,
             plan_id: plan.id,
             task_date: task.task_date,

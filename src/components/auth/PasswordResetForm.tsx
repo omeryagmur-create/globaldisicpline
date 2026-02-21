@@ -7,7 +7,6 @@ import * as z from "zod";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,6 @@ const formSchema = z.object({
 });
 
 export function PasswordResetForm() {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const supabase = createClient();
     const [message, setMessage] = useState<string | null>(null);
@@ -52,7 +50,7 @@ export function PasswordResetForm() {
 
             setMessage("Check your email for the password reset link.");
             toast.success("Reset link sent!");
-        } catch (error) {
+        } catch (_error) {
             toast.error("An unexpected error occurred");
         } finally {
             setIsLoading(false);
@@ -64,7 +62,7 @@ export function PasswordResetForm() {
             <CardHeader className="space-y-1 text-center">
                 <CardTitle className="text-2xl font-bold tracking-tight">Reset Password</CardTitle>
                 <CardDescription>
-                    Enter your email and we'll send you a reset link
+                    Enter your email and we&apos;ll send you a reset link
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">

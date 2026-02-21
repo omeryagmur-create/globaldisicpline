@@ -8,19 +8,44 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { DailyMissions } from "@/components/dashboard/DailyMissions";
 import { Clock, Trophy, Star, Zap, LayoutDashboard, Flame, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
-import { toast } from "react-hot-toast";
-import { useUserStore } from "@/stores/useUserStore";
+import { useEffect, useState } from "react";
 import { MissionEngine } from "@/lib/missionEngine";
 
+export interface SessionData {
+    id: string;
+    user_id: string;
+    duration_minutes: number;
+    session_type: string | null;
+    subject: string | null;
+    notes: string | null;
+    xp_earned: number;
+    started_at: string;
+    completed_at: string | null;
+    is_completed: boolean;
+    created_at: string;
+}
+
+export interface UserData {
+    id: string;
+    email?: string;
+}
+
+export interface ProfileData {
+    id: string;
+    full_name?: string;
+    total_xp: number;
+    current_streak: number;
+    longest_streak: number;
+}
+
 interface DashboardContentProps {
-    user: any;
-    profile: any;
+    user: UserData;
+    profile: ProfileData;
     totalMinutes: number;
-    recentSessions: any[];
+    recentSessions: SessionData[];
     totalSessions: number;
-    todaySessions: any[];
-    yesterdaySessions: any[];
+    todaySessions: SessionData[];
+    yesterdaySessions: SessionData[];
 }
 
 export function DashboardContent({
@@ -38,8 +63,8 @@ export function DashboardContent({
     const remainingMinutes = totalMinutes % 60;
     const hoursDisplay = `${totalHours}h ${remainingMinutes}m`;
 
-    const todayMinutes = todaySessions.reduce((acc: number, s: any) => acc + s.duration_minutes, 0);
-    const yesterdayMinutes = yesterdaySessions.reduce((acc: number, s: any) => acc + s.duration_minutes, 0);
+    const todayMinutes = todaySessions.reduce((acc: number, s: SessionData) => acc + s.duration_minutes, 0);
+    const yesterdayMinutes = yesterdaySessions.reduce((acc: number, s: SessionData) => acc + s.duration_minutes, 0);
 
     let trend: string;
     let trendType: 'up' | 'down' | 'neutral';
@@ -76,7 +101,10 @@ export function DashboardContent({
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
 
+    const [ranking, setRanking] = useState<number>(1);
+
     useEffect(() => {
+        setRanking(Math.floor(Math.random() * 100) + 1);
         MissionEngine.syncDailyMissions(profile.id, () => ({ title: t.missions.title }));
     }, [todaySessions.length, todayMinutes, profile.id, t.missions.title]);
 
@@ -147,7 +175,7 @@ export function DashboardContent({
                 />
                 <StatsCard
                     title={t.dashboard.statRanking}
-                    value={`#${Math.floor(Math.random() * 100) + 1}`}
+                    value={`#${ranking}`}
                     icon={Trophy}
                     trend={t.dashboard.statTopPercent}
                     trendType="up"

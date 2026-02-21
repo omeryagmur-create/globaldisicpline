@@ -13,8 +13,10 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 
+import { FocusSession } from "@/types/database";
+
 interface FocusContentProps {
-    history: any[];
+    history: FocusSession[];
 }
 
 export function FocusContent({ history }: FocusContentProps) {
@@ -22,18 +24,19 @@ export function FocusContent({ history }: FocusContentProps) {
     const { isZenMode, toggleZenMode } = useTimerStore();
     const [isActuallyFullscreen, setIsActuallyFullscreen] = useState(false);
 
-    const QUOTES = [
+    const QUOTES = useMemo(() => [
         t.focus.quote1,
         t.focus.quote2,
         t.focus.quote3,
         t.focus.quote4,
         t.focus.quote5,
-    ];
+    ], [t.focus.quote1, t.focus.quote2, t.focus.quote3, t.focus.quote4, t.focus.quote5]);
 
-    // Stabilize the quote - only change when Zen Mode is toggled
-    const activeQuote = useMemo(() => {
-        return QUOTES[Math.floor(Math.random() * QUOTES.length)];
-    }, [isZenMode]);
+    const [activeQuote, setActiveQuote] = useState(QUOTES[0]);
+
+    useEffect(() => {
+        setActiveQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+    }, [isZenMode, QUOTES]);
 
     const features = [
         { icon: Clock, label: t.focus.pomodoro25, xp: t.focus.xp10, color: "text-rose-400", bg: "bg-rose-500/5", border: "border-rose-500/15" },
@@ -79,7 +82,7 @@ export function FocusContent({ history }: FocusContentProps) {
                                 <span className="text-xs font-black uppercase tracking-[0.3em] font-mono">Zen Focus Activated</span>
                             </div>
                             <h2 className="text-xl md:text-2xl font-medium text-white/40 italic">
-                                "{activeQuote}"
+                                &quot;{activeQuote}&quot;
                             </h2>
                         </div>
 
@@ -127,7 +130,7 @@ export function FocusContent({ history }: FocusContentProps) {
                         <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
                             {t.focus.pageTitle} <span className="gradient-text">{t.focus.pageTitleHighlight}</span> {t.focus.pageTitleEnd}
                         </h1>
-                        <p className="text-white/30 font-medium italic text-sm max-w-lg">"{activeQuote}"</p>
+                        <p className="text-white/30 font-medium italic text-sm max-w-lg">&quot;{activeQuote}&quot;</p>
                     </div>
 
                     {/* Quick Stats */}

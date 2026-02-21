@@ -1,4 +1,5 @@
 import { MoveRight } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 interface CasestudyItem {
@@ -61,7 +62,7 @@ export const Casestudy5 = ({
           >
             <div className="flex flex-col justify-between gap-4 pt-8 md:pt-16 lg:pb-16">
               <div className="flex items-center gap-2 text-2xl font-medium">
-                <img src={featuredCasestudy.logo} alt="logo" className="h-9" />
+                <div className="relative h-9 w-32"><Image src={featuredCasestudy.logo} alt="logo" fill className="object-contain object-left" /></div>
                 {featuredCasestudy.company}
               </div>
               <div>
@@ -83,11 +84,12 @@ export const Casestudy5 = ({
             </div>
             <div className="relative isolate py-16">
               <div className="relative isolate h-full border border-border bg-background p-2">
-                <div className="h-full overflow-hidden">
-                  <img
-                    src={featuredCasestudy.image}
+                <div className="h-full overflow-hidden relative">
+                  <Image
+                    src={featuredCasestudy.image || "https://shadcnblocks.com/images/block/placeholder-1.svg"}
                     alt="placeholder"
-                    className="aspect-[14/9] h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    fill
+                    className="aspect-[14/9] object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   />
                 </div>
               </div>
@@ -100,14 +102,13 @@ export const Casestudy5 = ({
                 <a
                   key={item.company}
                   href={item.link || "#"}
-                  className={`group flex flex-col justify-between gap-12 border-border bg-background px-6 py-8 transition-colors duration-500 ease-out hover:bg-muted/40 md:py-16 lg:pb-16 xl:gap-16 ${
-                    idx === 0
+                  className={`group flex flex-col justify-between gap-12 border-border bg-background px-6 py-8 transition-colors duration-500 ease-out hover:bg-muted/40 md:py-16 lg:pb-16 xl:gap-16 ${idx === 0
                       ? "xl:border-l xl:pl-8"
                       : "border-t lg:border-t-0 lg:border-l xl:border-r xl:pl-8"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2 text-2xl font-medium">
-                    <img src={item.logo} alt="logo" className="h-9" />
+                    <div className="relative h-9 w-32"><Image src={item.logo} alt="logo" fill className="object-contain object-left" /></div>
                     {item.company}
                   </div>
                   <div>

@@ -19,7 +19,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Search, Settings } from "lucide-react";
+import { MoreHorizontal, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const MOCK_USERS = [

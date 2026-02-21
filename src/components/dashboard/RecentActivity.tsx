@@ -16,7 +16,7 @@ export function RecentActivity({
 }: RecentActivityProps) {
     const { t, language } = useLanguage();
 
-    const sessionTypeConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
+    const sessionTypeConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
         pomodoro_25: { label: t.activity.pomodoro25, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", icon: Timer },
         pomodoro_50: { label: t.activity.deepPomodoro, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", icon: Timer },
         deep_focus: { label: t.activity.deepFocus, color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20", icon: BookOpen },

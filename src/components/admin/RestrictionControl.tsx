@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { applyRestriction } from "@/lib/utils/restrictions";
 import { toast } from "react-hot-toast";
 
 export function RestrictionControl() {
@@ -31,7 +30,7 @@ export function RestrictionControl() {
             });
             toast.success("Restriction applied successfully");
             setReason("");
-        } catch (error) {
+        } catch (_error) {
             toast.error("Failed to apply restriction");
         }
     };
@@ -85,7 +84,7 @@ export function RestrictionControl() {
                                 <TableCell className="font-mono text-xs">admin_user_id</TableCell>
                                 <TableCell>Social Reduction</TableCell>
                                 <TableCell>2</TableCell>
-                                <TableCell>Failed "Morning Focus" Challenge</TableCell>
+                                <TableCell>Failed &quot;Morning Focus&quot; Challenge</TableCell>
                                 <TableCell>Active</TableCell>
                             </TableRow>
                             {/* More mock rows could go here */}

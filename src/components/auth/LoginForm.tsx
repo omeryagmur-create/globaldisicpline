@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -51,7 +50,7 @@ export function LoginForm() {
             toast.success(t.auth.successLogin);
             router.push("/dashboard");
             router.refresh();
-        } catch (error) {
+        } catch (_error) {
             toast.error(t.auth.errorUnexpected);
         } finally {
             setIsLoading(false);

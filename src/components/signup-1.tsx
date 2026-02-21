@@ -1,4 +1,5 @@
 import { FcGoogle } from "react-icons/fc";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,11 +39,13 @@ const Signup1 = ({
             {/* Logo */}
             <div className="flex items-center gap-1 lg:justify-start">
               <a href={logo.url}>
-                <img
+                <Image
                   src={logo.src}
-                  alt={logo.alt}
+                  alt={logo.alt || logo.title || "Logo"}
                   title={logo.title}
-                  className="h-10 dark:invert"
+                  width={200}
+                  height={40}
+                  className="h-10 w-auto dark:invert"
                 />
               </a>
             </div>

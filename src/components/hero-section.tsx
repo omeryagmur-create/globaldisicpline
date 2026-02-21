@@ -147,30 +147,30 @@ export default function Hero() {
                   <p className="text-muted-foreground">Trusted by teams at :</p>
                   <div className="mt-6 grid max-w-sm grid-cols-3 gap-6">
                     <div className="flex">
-                      <img
-                        className="h-4 w-fit"
+                      <Image
+                        className="h-4 w-auto object-contain"
                         src="https://html.tailus.io/blocks/customers/column.svg"
                         alt="Column Logo"
-                        height="16"
-                        width="auto"
+                        height={16}
+                        width={64}
                       />
                     </div>
                     <div className="flex">
-                      <img
-                        className="h-5 w-fit"
+                      <Image
+                        className="h-5 w-auto object-contain"
                         src="https://html.tailus.io/blocks/customers/nvidia.svg"
                         alt="Nvidia Logo"
-                        height="20"
-                        width="auto"
+                        height={20}
+                        width={80}
                       />
                     </div>
                     <div className="flex">
-                      <img
-                        className="h-4 w-fit"
+                      <Image
+                        className="h-4 w-auto object-contain"
                         src="https://html.tailus.io/blocks/customers/github.svg"
                         alt="GitHub Logo"
-                        height="16"
-                        width="auto"
+                        height={16}
+                        width={64}
                       />
                     </div>
                   </div>
