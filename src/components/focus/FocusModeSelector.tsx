@@ -244,7 +244,7 @@ export function FocusModeSelector() {
                                     </Button>
                                 ))}
                                 <Button
-                                    variant={cycleCount === 'infinite' ? "default" : "infinite"} // fixed a potential bug here
+                                    variant={cycleCount === 'infinite' ? "default" : "outline"} // fixed a potential bug here
                                     onClick={() => setCycleCount('infinite')}
                                     className="rounded-xl h-12 px-6 text-xs font-bold uppercase"
                                 >
