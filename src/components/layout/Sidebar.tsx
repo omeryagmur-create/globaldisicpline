@@ -28,7 +28,20 @@ export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
     const { t } = useLanguage();
 
-    const menuGroups = [
+    interface SidebarItem {
+        title: string;
+        icon: any;
+        href: string;
+        color: string;
+        variant?: "premium";
+    }
+
+    interface MenuGroup {
+        label: string;
+        items: SidebarItem[];
+    }
+
+    const menuGroups: MenuGroup[] = [
         {
             label: t.sidebar.groupCore,
             items: [
@@ -50,7 +63,7 @@ export function Sidebar({ className }: SidebarProps) {
             label: t.sidebar.groupCommunity,
             items: [
                 { title: t.sidebar.studyGroups, icon: Users, href: "/groups", color: "text-teal-400" },
-                { title: t.sidebar.premium, icon: Crown, href: "/premium", color: "text-amber-400", variant: "premium" as const },
+                { title: t.sidebar.premium, icon: Crown, href: "/premium", color: "text-amber-400", variant: "premium" },
             ]
         },
         {
