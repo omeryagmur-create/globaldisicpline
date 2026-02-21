@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { realtimeManager } from '@/lib/events/RealtimeManager';
+import { AnalyticsService } from '@/services/AnalyticsService';
 
 export interface FocusMode {
     id: string;
@@ -92,6 +93,11 @@ export const useTimerStore = create<TimerState>()(
                         subject: state.subject || undefined
                     }
                 });
+
+                AnalyticsService.trackEvent('SESSION_START', {
+                    duration: state.initialTime,
+                    sessionType: state.sessionType
+                });
             },
 
             pause: (isInterruption = false) => {
@@ -103,6 +109,11 @@ export const useTimerStore = create<TimerState>()(
                             reason: 'User manually interrupted a focus session.',
                             severity: 'medium'
                         }
+                    });
+
+                    AnalyticsService.trackEvent('SESSION_CANCELLED', {
+                        timeElapsed: state.initialTime - state.timeLeft,
+                        sessionType: state.sessionType
                     });
                 }
                 // When pausing, the current timeLeft is already accurate from the last tick
@@ -160,6 +171,11 @@ export const useTimerStore = create<TimerState>()(
 
             completeSession: () => {
                 const state = get();
+
+                AnalyticsService.trackEvent('SESSION_COMPLETE', {
+                    duration: state.initialTime,
+                    sessionType: state.sessionType
+                });
 
                 // Check if in a sequence
                 if (state.currentSequenceId) {

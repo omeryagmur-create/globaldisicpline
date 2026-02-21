@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     try {
         const restrictions = await checkActiveRestrictions(user.id);
         return NextResponse.json({ restrictions });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

@@ -26,6 +26,7 @@ export interface Database {
                     tier: string
                     subscription_tier: string
                     is_admin: boolean
+                    experiments: Json | null
                     created_at: string
                     updated_at: string
                 }
@@ -45,6 +46,7 @@ export interface Database {
                     tier?: string
                     subscription_tier?: string
                     is_admin?: boolean
+                    experiments?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -64,6 +66,7 @@ export interface Database {
                     tier?: string
                     subscription_tier?: string
                     is_admin?: boolean
+                    experiments?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -270,6 +273,29 @@ export interface Database {
                     created_at?: string
                 }
             }
+            user_events: {
+                Row: {
+                    id: string
+                    user_id: string
+                    event_type: string
+                    event_data: Json | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    event_type: string
+                    event_data?: Json | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    event_type?: string
+                    event_data?: Json | null
+                    created_at?: string
+                }
+            }
         }
     }
 }
@@ -280,3 +306,4 @@ export type StudyPlan = Database['public']['Tables']['study_plans']['Row']
 export type DailyTask = Database['public']['Tables']['daily_tasks']['Row']
 export type Challenge = Database['public']['Tables']['challenges']['Row']
 export type Restriction = Database['public']['Tables']['restrictions']['Row']
+export type UserEvent = Database['public']['Tables']['user_events']['Row']

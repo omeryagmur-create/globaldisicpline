@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
-import { LeaderboardHero } from "@/components/leaderboard/LeaderboardHero";
+import dynamic from "next/dynamic";
+const LeaderboardTable = dynamic(() => import("@/components/leaderboard/LeaderboardTable").then(mod => mod.LeaderboardTable), {
+    ssr: false,
+    loading: () => <div className="h-64 animate-pulse bg-white/[0.02] rounded-3xl" />
+});
+const LeaderboardHero = dynamic(() => import("@/components/leaderboard/LeaderboardHero").then(mod => mod.LeaderboardHero), {
+    ssr: false,
+    loading: () => <div className="h-48 animate-pulse bg-white/[0.02] rounded-3xl" />
+});
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Zap, ShieldCheck, Users, TrendingUp, Globe } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -87,7 +94,7 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* Mode Toggle */}
-                <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-fit">
+                <Tabs value={mode} onValueChange={(v) => setMode(v as "standard" | "prestige")} className="w-fit">
                     <TabsList className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 h-14 gap-1">
                         <TabsTrigger
                             value="standard"

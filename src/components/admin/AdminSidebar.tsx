@@ -8,8 +8,7 @@ import {
     Users,
     ShieldAlert,
     BookOpen,
-    ArrowLeft,
-    Settings
+    ArrowLeft
 } from "lucide-react";
 
 interface AdminSidebarProps extends React.HTMLAttributes<HTMLDivElement> {

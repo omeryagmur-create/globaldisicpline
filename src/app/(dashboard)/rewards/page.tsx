@@ -9,8 +9,7 @@ import {
     Shield,
     Lock,
     Award,
-    CheckCircle2,
-    ArrowRight
+    CheckCircle2
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import Image from "next/image";
 
 export default function RewardsPage() {
     const { t } = useLanguage();
@@ -190,7 +190,7 @@ export default function RewardsPage() {
                     {REWARDS.map((item) => (
                         <Card key={item.id} className="group overflow-hidden border-2 border-transparent hover:border-primary/20 transition-all duration-300">
                             <div className="h-48 overflow-hidden relative">
-                                <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                <Image src={item.image} alt={item.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                                 <div className="absolute top-4 left-4">
                                     <Badge className="bg-white/90 text-black border-none hover:bg-white">{item.type}</Badge>
                                 </div>

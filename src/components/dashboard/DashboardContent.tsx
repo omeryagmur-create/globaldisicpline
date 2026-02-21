@@ -9,9 +9,9 @@ import { DailyMissions } from "@/components/dashboard/DailyMissions";
 import { Clock, Trophy, Star, Zap, LayoutDashboard, Flame, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 import { useUserStore } from "@/stores/useUserStore";
+import { MissionEngine } from "@/lib/missionEngine";
 
 interface DashboardContentProps {
     user: any;
@@ -64,92 +64,21 @@ export function DashboardContent({
     const xpNeededForNextLevel = xpForNextLevel - xpForCurrentLevel;
     const progress = Math.min(100, Math.max(0, (xpInThisLevel / xpNeededForNextLevel) * 100));
 
-    // Missions derived in client to use translations
-    const missions = [
-        {
-            id: "1",
-            title: t.missions.mission1Title,
-            desc: t.missions.mission1Desc,
-            reward: 150,
-            progress: todaySessions.some((s: any) => s.session_type === 'deep_focus') ? 100 : 0,
-            isCompleted: todaySessions.some((s: any) => s.session_type === 'deep_focus')
-        },
-        {
-            id: "2",
-            title: t.missions.mission2Title,
-            desc: t.missions.mission2Desc,
-            reward: 300,
-            progress: Math.min(100, Math.round((todayMinutes / 120) * 100)),
-            isCompleted: todayMinutes >= 120
-        },
-        {
-            id: "3",
-            title: t.missions.mission3Title,
-            desc: t.missions.mission3Desc,
-            reward: 100,
-            progress: Math.min(100, Math.round((todaySessions.length / 3) * 100)),
-            isCompleted: todaySessions.length >= 3
-        }
-    ];
+    const engineMissions = MissionEngine.getDailyMissions(todaySessions, todayMinutes);
+    const missions = engineMissions.map(m => {
+        let title = "";
+        let desc = "";
+        if (m.id === "1") { title = t.missions.mission1Title; desc = t.missions.mission1Desc; }
+        if (m.id === "2") { title = t.missions.mission2Title; desc = t.missions.mission2Desc; }
+        if (m.id === "3") { title = t.missions.mission3Title; desc = t.missions.mission3Desc; }
+        return { ...m, title, desc };
+    });
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
 
-    // ─── MISSION SYNC LOGIC ──────────────────────────────────────
-    // Sync missions on load if they are met but not awarded
-    const supabaseClient = createClient();
-
     useEffect(() => {
-        const syncMissions = async () => {
-            const startOfToday = new Date();
-            startOfToday.setHours(0, 0, 0, 0);
-
-            // Fetch all today's sessions including rewards
-            const { data: allTodaySessions } = await supabaseClient
-                .from("focus_sessions")
-                .select("*")
-                .eq("user_id", profile.id)
-                .eq("is_completed", true)
-                .gte("completed_at", startOfToday.toISOString());
-
-            if (!allTodaySessions) return;
-
-            const missionData = [
-                { id: "1", reward: 150, met: allTodaySessions.some((s: any) => s.session_type === 'deep_focus') },
-                { id: "2", reward: 300, met: allTodaySessions.reduce((acc: number, s: any) => acc + (s.session_type?.startsWith('reward_') ? 0 : (s.duration_minutes || 0)), 0) >= 120 },
-                { id: "3", reward: 100, met: allTodaySessions.filter((s: any) => !s.session_type?.startsWith('reward_')).length >= 3 }
-            ];
-
-            for (const mission of missionData) {
-                const missionKey = `reward_mission_${mission.id}`;
-                const alreadyAwarded = allTodaySessions.some((s: any) => s.session_type === missionKey);
-
-                if (mission.met && !alreadyAwarded) {
-                    await supabaseClient.from("focus_sessions").insert({
-                        user_id: profile.id,
-                        duration_minutes: 0,
-                        session_type: missionKey,
-                        xp_earned: mission.reward,
-                        started_at: new Date().toISOString(),
-                        completed_at: new Date().toISOString(),
-                        is_completed: true,
-                        notes: `Daily Mission ${mission.id} Sync Reward`
-                    });
-
-                    await supabaseClient.rpc('update_user_xp', {
-                        p_user_id: profile.id,
-                        p_xp_amount: mission.reward
-                    });
-
-                    toast.success(`${t.missions.title}: +${mission.reward} XP`, { icon: "🏆" });
-                    // Refresh profile to update UI
-                    useUserStore.getState().fetchProfile();
-                }
-            }
-        };
-
-        syncMissions();
+        MissionEngine.syncDailyMissions(profile.id, () => ({ title: t.missions.title }));
     }, [todaySessions.length, todayMinutes, profile.id, t.missions.title]);
-    // ──────────────────────────────────────────────────────────────
 
     return (
         <div className="space-y-6 pb-12 max-w-7xl mx-auto">

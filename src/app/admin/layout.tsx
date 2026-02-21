@@ -31,7 +31,7 @@ export default function AdminLayout({
             if (!isAdmin) {
                 // Not an admin - redirect to dashboard
                 router.push("/dashboard");
-            } else {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setIsAuthorized(true);
             }
         } else if (!loading && !profile) {

@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import Image from "next/image";
 import { Zap, Moon, Sun, Bell, User as UserIcon, LogOut, Users, Search, Command } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,9 @@ export function Navbar() {
                             >
                                 <div className="flex h-full w-full items-center justify-center rounded-xl overflow-hidden">
                                     {profile?.avatar_url ? (
-                                        <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                                        <div className="relative h-full w-full">
+                                            <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
+                                        </div>
                                     ) : (
                                         <div className="bg-gradient-to-br from-indigo-500/30 to-violet-500/30 h-full w-full flex items-center justify-center">
                                             <span className="text-xs font-bold text-indigo-300">
@@ -142,7 +145,9 @@ export function Navbar() {
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center border border-indigo-500/20 shrink-0">
                                         {profile?.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover rounded-xl" />
+                                            <div className="relative h-full w-full">
+                                                <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover rounded-xl" unoptimized />
+                                            </div>
                                         ) : (
                                             <span className="text-sm font-bold text-indigo-300">
                                                 {(profile?.full_name || profile?.email || "U").charAt(0).toUpperCase()}

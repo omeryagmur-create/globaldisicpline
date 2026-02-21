@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         const restriction = await applyRestriction(user.id, type || 'social_reduction', severity, reason || 'Manual restriction applied via API');
 
         return NextResponse.json({ success: true, restriction });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

@@ -1,9 +1,7 @@
-"use client";
-
 import { PricingCards } from "@/components/premium/PricingCards";
 import { FeatureComparison } from "@/components/premium/FeatureComparison";
+import { PremiumInsights } from "@/components/premium/PremiumInsights";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Metadata } from "next";
 
 // Since this is a client component usage inside a page.tsx, we can't export metadata directly if it's "use client".
 // However, page.tsx is usually server component. Let's make this page.tsx a server component.
@@ -19,6 +17,15 @@ export default function PremiumPage() {
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     Get the tools you need to master your exams. Join thousands of students achieving their dreams with Global Discipline Premium.
                 </p>
+            </div>
+
+            {/* PREMIUM INSIGHTS */}
+            <div className="space-y-4">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold">The Premium Advantage</h2>
+                    <p className="text-muted-foreground text-sm mt-1">See what Global Discipline PRO users achieve on average.</p>
+                </div>
+                <PremiumInsights />
             </div>
 
             {/* PRICING CARDS */}
@@ -37,7 +44,7 @@ export default function PremiumPage() {
                     <AccordionItem value="item-1">
                         <AccordionTrigger>Can I cancel anytime?</AccordionTrigger>
                         <AccordionContent>
-                            Yes! You can cancel your subscription at any time from your account settings. You'll keep access until the end of your billing period.
+                            Yes! You can cancel your subscription at any time from your account settings. You&apos;ll keep access until the end of your billing period.
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
@@ -55,7 +62,7 @@ export default function PremiumPage() {
                     <AccordionItem value="item-4">
                         <AccordionTrigger>What happens to my data if I downgrade?</AccordionTrigger>
                         <AccordionContent>
-                            Your data is safe. If you downgrade to Free, you'll simply lose access to Premium features (like advanced analytics history beyond the free limit), but your core data remains.
+                            Your data is safe. If you downgrade to Free, you&apos;ll simply lose access to Premium features (like advanced analytics history beyond the free limit), but your core data remains.
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>

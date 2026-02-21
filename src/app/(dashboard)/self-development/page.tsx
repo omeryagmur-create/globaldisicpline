@@ -6,9 +6,8 @@ import { HabitGrid } from "@/components/development/HabitGrid";
 import { TaskEngine } from "@/components/development/TaskEngine";
 import { DailyReflectionForm } from "@/components/development/DailyReflection";
 import { XPMarket } from "@/components/xp-market/XPMarket";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
     Rocket,
     Target,
@@ -80,7 +79,7 @@ export default function SelfDevPage() {
                                         Active Path: {selectedPath}
                                     </h2>
                                     <button
-                                        onClick={() => useSelfDevStore.getState().setPath(null as any)}
+                                        onClick={() => useSelfDevStore.getState().setPath(null as unknown as "Internal" | "Physical" | "Social")}
                                         className="text-sm font-bold text-muted-foreground hover:text-primary flex items-center transition-colors px-4 py-2 rounded-lg bg-muted/50"
                                     >
                                         Change Branch <ChevronRight className="h-4 w-4 ml-1" />
@@ -108,9 +107,9 @@ export default function SelfDevPage() {
                                             </div>
 
                                             <div className="p-4 rounded-xl bg-background border border-border/50 space-y-3 shadow-inner">
-                                                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Today's Protocol</div>
+                                                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Today&apos;s Protocol</div>
                                                 <div className="font-bold text-sm tracking-tight capitalize">{selectedPath} Focus Protocol</div>
-                                                <div className="text-[10px] text-muted-foreground italic leading-tight">"Efficiency is the only metric that matters."</div>
+                                                <div className="text-[10px] text-muted-foreground italic leading-tight">&quot;Efficiency is the only metric that matters.&quot;</div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-2">

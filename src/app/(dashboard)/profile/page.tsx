@@ -91,8 +91,8 @@ export default function ProfilePage() {
 
             await fetchProfile();
             toast.success(t.profile.updateSuccess);
-        } catch (error: any) {
-            toast.error(error.message || t.profile.updateError);
+        } catch (error: unknown) {
+            toast.error((error as Error).message || t.profile.updateError);
         } finally {
             setUpdating(false);
         }
@@ -104,8 +104,8 @@ export default function ProfilePage() {
             if (error) throw error;
             router.push("/login");
             toast.success(t.auth.successLogin); // Using a generalized "success" from auth or could define more
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error((error as Error).message);
         }
     };
 
@@ -120,8 +120,8 @@ export default function ProfilePage() {
             router.push("/");
             toast.dismiss();
             toast.success(t.profile.deleteAccount);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error((error as Error).message);
         }
     };
 

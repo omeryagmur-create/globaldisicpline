@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Profile, Restriction } from '@/types/user';
-import { createClient } from '@/lib/supabase/client';
 import { realtimeManager } from '@/lib/events/RealtimeManager';
 import { calculateLeague, LeagueTier } from '@/lib/leagues';
+import { UserService } from '@/services/UserService';
 
 interface UserState {
     profile: Profile | null;
@@ -40,24 +40,11 @@ export const useUserStore = create<UserState>()(
 
             fetchProfile: async () => {
                 set({ loading: true });
-                const supabase = createClient();
-
                 try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const profile = await UserService.getProfile();
 
-                    if (!user) {
+                    if (!profile) {
                         set({ profile: null, league: 'Bronze', loading: false });
-                        return;
-                    }
-
-                    const { data: profile, error } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (error) {
-                        console.error('Error fetching profile:', error);
                         return;
                     }
 
@@ -77,14 +64,10 @@ export const useUserStore = create<UserState>()(
                 const { profile } = get();
                 if (!profile) return;
 
-                const supabase = createClient();
-                const { error } = await supabase
-                    .from('profiles')
-                    .update(updates)
-                    .eq('id', profile.id);
-
-                if (error) {
-                    console.error('Error updating profile:', error);
+                try {
+                    await UserService.updateProfile(profile.id, updates);
+                } catch (error) {
+                    console.error('Error updating profile in store:', error);
                     throw error;
                 }
 
@@ -121,30 +104,23 @@ export const useUserStore = create<UserState>()(
             },
 
             checkRestrictions: async () => {
-                try {
-                    const response = await fetch('/api/restrictions/active');
-                    if (response.ok) {
-                        const data = await response.json();
-                        set({ activeRestrictions: data.restrictions || [] });
-                    }
-                } catch (error) {
-                    console.error('Error checking restrictions:', error);
-                }
+                const restrictions = await UserService.getActiveRestrictions();
+                set({ activeRestrictions: restrictions });
             },
 
             logout: async () => {
-                const supabase = createClient();
-                await supabase.auth.signOut();
+                await UserService.signOut();
                 set({ profile: null, activeRestrictions: [], league: 'Bronze' });
             },
 
             isRestricted: (feature) => {
                 const { activeRestrictions } = get();
-                return activeRestrictions.some(r =>
-                    (r as any).features?.includes(feature) ||
-                    (r as any).features?.includes('all_premium_features') ||
-                    (r as any).features?.includes('social_features_disabled')
-                );
+                return activeRestrictions.some(r => {
+                    const res = r as Restriction & { features?: string[] };
+                    return res.features?.includes(feature) ||
+                        res.features?.includes('all_premium_features') ||
+                        res.features?.includes('social_features_disabled');
+                });
             },
         }),
         {

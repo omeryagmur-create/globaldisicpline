@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PlannerContent } from "@/components/planner/PlannerContent";
 import { Metadata } from "next";
+import { PlannerService } from "@/services/PlannerService";
 
 export const metadata: Metadata = {
     title: "Study Planner - Global Discipline Engine",
@@ -13,20 +14,12 @@ async function getPlannerData() {
 
     if (!user) return { plan: null, tasks: [] };
 
-    const { data: plan } = await supabase
-        .from("study_plans")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .single();
+    const plans = await PlannerService.getStudyPlans(supabase, user.id);
+    const plan = plans.find((p) => p.is_active);
 
     if (!plan) return { plan: null, tasks: [] };
 
-    const { data: tasks } = await supabase
-        .from("daily_tasks")
-        .select("*")
-        .eq("plan_id", plan.id)
-        .order("task_date", { ascending: true });
+    const tasks = await PlannerService.getTasksByPlan(supabase, plan.id);
 
     return { plan, tasks: tasks || [] };
 }

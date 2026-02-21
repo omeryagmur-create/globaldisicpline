@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DevelopmentPath, Habit, DailyReflection, SelfDevelopmentStore } from '@/types/self-development';
+import { SelfDevelopmentStore } from '@/types/self-development';
 
 export const useSelfDevStore = create<SelfDevelopmentStore>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             selectedPath: null,
             habits: [],
             reflections: [],
