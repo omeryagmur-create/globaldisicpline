@@ -21,6 +21,7 @@ export function useExperiment(experimentName: string, fallbackVariants: string[]
         return () => {
             isMounted = false;
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [experimentName, JSON.stringify(fallbackVariants)]);
 
     return variant;

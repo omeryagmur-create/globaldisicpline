@@ -1,4 +1,3 @@
-import { Profile } from '@/types/user';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface GroupRecommendation {

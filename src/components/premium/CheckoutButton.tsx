@@ -25,6 +25,7 @@ export function CheckoutButton({ tier, interval }: CheckoutButtonProps) {
             toast.success(`Redirecting to checkout for ${tier.toUpperCase()} plan...`);
             console.log(`Checkout initiated for ${tier} ${interval}`);
         } catch (error) {
+            console.error(error);
             toast.error("Failed to initiate checkout. Please try again.");
         } finally {
             setLoading(false);

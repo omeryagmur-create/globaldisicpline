@@ -50,7 +50,7 @@ export function LoginForm() {
             toast.success(t.auth.successLogin);
             router.push("/dashboard");
             router.refresh();
-        } catch (_error) {
+        } catch {
             toast.error(t.auth.errorUnexpected);
         } finally {
             setIsLoading(false);

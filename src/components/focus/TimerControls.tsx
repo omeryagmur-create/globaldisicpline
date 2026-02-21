@@ -65,7 +65,7 @@ export function TimerControls() {
 
             {!isRunning && isStarted && (
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
-                    Session Paused - Don't give up!
+                    Session Paused - Don&apos;t give up!
                 </p>
             )}
         </div>

@@ -9,19 +9,11 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ProgressChart } from "./ProgressChart";
 import { AITip } from "./AITip";
-
-interface Task {
-    id: string;
-    task_date: string;
-    subject: string;
-    topic: string | null;
-    is_completed: boolean;
-    estimated_duration: number;
-}
+import { StudyPlan, DailyTask } from "@/types/user";
 
 interface PlannerViewProps {
-    plan: any;
-    tasks: Task[];
+    plan: StudyPlan;
+    tasks: DailyTask[];
     onToggleTask: (taskId: string, completed: boolean) => Promise<void>;
 }
 
@@ -61,7 +53,6 @@ export function PlannerView({ plan, tasks, onToggleTask }: PlannerViewProps) {
             <div className="grid grid-cols-7 gap-2">
                 {weekDays.map((day) => {
                     const isSelected = isSameDay(day, selectedDate);
-                    const hasTasks = tasks.some(t => isSameDay(new Date(t.task_date), day));
                     const completedTasks = tasks.filter(t => isSameDay(new Date(t.task_date), day) && t.is_completed).length;
                     const totalTasks = tasks.filter(t => isSameDay(new Date(t.task_date), day)).length;
 

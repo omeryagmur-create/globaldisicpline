@@ -33,7 +33,7 @@ export function WeakAreasDisplay({ data }: WeakAreasDisplayProps) {
                     <CardTitle className="text-lg font-medium text-green-800">Strong Performance!</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-green-700">You don't have any subjects with less than 50% success rate. Keep up the good work!</p>
+                    <p className="text-green-700">You don&apos;t have any subjects with less than 50% success rate. Keep up the good work!</p>
                 </CardContent>
             </Card>
         );

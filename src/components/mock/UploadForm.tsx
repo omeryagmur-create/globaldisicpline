@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, UploadCloud, Plus, Save } from "lucide-react";
+import { CalendarIcon, UploadCloud, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -30,7 +30,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EXAM_TYPES, SUBJECTS_BY_TYPE, calculateNetScore, MockExamType } from "@/lib/mock-exams";
@@ -79,7 +79,7 @@ export function UploadForm({ onSuccess }: UploadFormProps) {
         },
     });
 
-    const watchExamType = form.watch("examType");
+    // Removed unused watchExamType
 
     // Update subjects when exam type changes
     const handleExamTypeChange = (value: MockExamType) => {
@@ -148,9 +148,10 @@ export function UploadForm({ onSuccess }: UploadFormProps) {
             form.reset();
             router.refresh();
             if (onSuccess) onSuccess();
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            toast.error(error.message || "Failed to save exam results");
+            const err = error as Error;
+            toast.error(err.message || "Failed to save exam results");
         } finally {
             setLoading(false);
         }

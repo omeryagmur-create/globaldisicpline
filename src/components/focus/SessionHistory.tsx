@@ -1,7 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 
-export function SessionHistory({ history }: { history: any[] }) {
+type SessionItem = { id: string; session_type?: string; created_at: string; xp_earned?: number; duration_minutes?: number };
+
+export function SessionHistory({ history }: { history: SessionItem[] }) {
     if (history.length === 0) return null;
 
     return (

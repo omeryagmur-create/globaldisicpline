@@ -32,11 +32,9 @@ export function FocusContent({ history }: FocusContentProps) {
         t.focus.quote5,
     ], [t.focus.quote1, t.focus.quote2, t.focus.quote3, t.focus.quote4, t.focus.quote5]);
 
-    const [activeQuote, setActiveQuote] = useState(QUOTES[0]);
+    const [activeQuote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
-    useEffect(() => {
-        setActiveQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    }, [isZenMode, QUOTES]);
+
 
     const features = [
         { icon: Clock, label: t.focus.pomodoro25, xp: t.focus.xp10, color: "text-rose-400", bg: "bg-rose-500/5", border: "border-rose-500/15" },

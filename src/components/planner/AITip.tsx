@@ -1,5 +1,4 @@
-"use client";
-
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
 
@@ -13,7 +12,7 @@ const TIPS = [
 ];
 
 export function AITip() {
-    const randomTip = TIPS[Math.floor(Math.random() * TIPS.length)];
+    const [randomTip] = useState(() => TIPS[Math.floor(Math.random() * TIPS.length)]);
 
     return (
         <Card className="bg-primary/5 border-primary/20">

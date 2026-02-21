@@ -2,9 +2,9 @@
  * Simple in-memory cache that can be extended to use Redis (e.g. Upstash)
  */
 class CacheManager {
-    private cache = new Map<string, { value: any, expires: number }>();
+    private cache = new Map<string, { value: unknown, expires: number }>();
 
-    set(key: string, value: any, ttlSeconds: number = 60) {
+    set(key: string, value: unknown, ttlSeconds: number = 60) {
         this.cache.set(key, {
             value,
             expires: Date.now() + (ttlSeconds * 1000)

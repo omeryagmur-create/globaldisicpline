@@ -10,7 +10,7 @@ import { DevelopmentPath } from "@/types/self-development";
 export function PathSelector() {
     const { selectedPath, setPath } = useSelfDevStore();
 
-    const paths: { id: DevelopmentPath; label: string; desc: string; icon: any; color: string }[] = [
+    const paths: { id: DevelopmentPath; label: string; desc: string; icon: React.ElementType; color: string }[] = [
         {
             id: 'Internal',
             label: 'Internal (İçsel)',

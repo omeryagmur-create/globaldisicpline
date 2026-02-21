@@ -27,10 +27,15 @@ import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { EXAM_TYPES } from "@/lib/mock-exams"
 import { generatePlan } from "@/lib/planner-utils"
 
-const formSchema = z.object({
+type FormValues = {
+    examDate: Date;
+    dailyHours: number;
+    subjects: { name: string; weight: number; }[];
+};
+
+const formSchema: z.ZodType<FormValues> = z.object({
     examDate: z.date(),
     dailyHours: z.coerce.number().min(1).max(12),
     subjects: z.array(z.object({
@@ -39,10 +44,8 @@ const formSchema = z.object({
     })),
 })
 
-type FormValues = z.infer<typeof formSchema>
-
 interface PlannerSetupProps {
-    onCreatePlan: (data: any) => Promise<void>
+    onCreatePlan: (data: { examDate: string, totalWeeks: number, subjects: string[], dailyHours: number, tasks: { task_date: string, subject: string, topic: string, estimated_duration: number }[] }) => Promise<void>
 }
 
 export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
@@ -50,7 +53,7 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
     const [subjectsList, setSubjectsList] = useState([{ name: "", weight: 5 }])
 
     const form = useForm<FormValues>({
-        // @ts-ignore
+        // @ts-expect-error Zod typing mismatch with hook form internally
         resolver: zodResolver(formSchema),
         defaultValues: {
             dailyHours: 4,
@@ -70,15 +73,18 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
         form.setValue("subjects", newSubs)
     }
 
-    const updateSubject = (index: number, field: "name" | "weight", value: any) => {
+    const updateSubject = (index: number, field: "name" | "weight", value: string | number) => {
         const newSubs = [...subjectsList]
-        // @ts-ignore
-        newSubs[index][field] = value
+        if (field === "name") {
+            newSubs[index].name = value as string;
+        } else {
+            newSubs[index].weight = value as number;
+        }
         setSubjectsList(newSubs)
         form.setValue("subjects", newSubs)
     }
 
-    const onSubmit = async (values: any) => {
+    const onSubmit = async (values: FormValues) => {
         setLoading(true)
         try {
             const planResult = generatePlan({
@@ -88,8 +94,10 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
             });
 
             await onCreatePlan({
-                ...values,
+                examDate: values.examDate.toISOString(),
+                dailyHours: values.dailyHours,
                 totalWeeks: planResult.totalWeeks,
+                subjects: values.subjects.map((s) => s.name),
                 tasks: planResult.generatedTasks
             })
             toast.success(`Plan created successfully for ${planResult.totalWeeks} weeks!`)
@@ -104,13 +112,14 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
         <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>Create Study Plan</CardTitle>
-                <CardDescription>Configure your exam date and subjects. We'll generate a schedule for you.</CardDescription>
+                <CardDescription>Configure your exam date and subjects. We&apos;ll generate a schedule for you.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
+                    {/* @ts-expect-error mismatch in submit handler */}
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
-                            // @ts-ignore
+                            // @ts-expect-error FormField control type mismatch
                             control={form.control}
                             name="examDate"
                             render={({ field }) => (
@@ -138,9 +147,7 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                // @ts-ignore
-                                                selected={field.value as Date}
-                                                // @ts-ignore
+                                                selected={field.value}
                                                 onSelect={field.onChange}
                                                 disabled={(date: Date) =>
                                                     date < new Date() || date < new Date("1900-01-01")
@@ -155,7 +162,7 @@ export function PlannerSetup({ onCreatePlan }: PlannerSetupProps) {
                         />
 
                         <FormField
-                            // @ts-ignore
+                            // @ts-expect-error FormField control type mismatch
                             control={form.control}
                             name="dailyHours"
                             render={({ field }) => (

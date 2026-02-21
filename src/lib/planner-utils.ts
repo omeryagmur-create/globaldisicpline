@@ -1,4 +1,4 @@
-import { addDays, differenceInDays, format, isSunday, isSaturday } from "date-fns";
+import { addDays, differenceInDays, isSunday, isSaturday } from "date-fns";
 
 interface Subject {
     name: string;
@@ -31,8 +31,7 @@ export function generatePlan(config: PlanConfig) {
 
     const tasks = [];
 
-    // Sort subjects by weight to prioritize
-    const sortedSubjects = [...subjects].sort((a, b) => b.weight - a.weight);
+
 
     // Subjects pool based on weight for round-robin distribution
     const subjectPool: string[] = [];

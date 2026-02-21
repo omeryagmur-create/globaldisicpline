@@ -24,13 +24,19 @@ export function TypoStriker() {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        let interval: any;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (isActive && timeLeft > 0) {
             interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
         } else if (timeLeft === 0 && isActive) {
-            endGame();
+            setIsActive(false);
+            const xp = score * 5;
+            if (xp > 0) {
+                addXP(xp, `Typo Striker Reward (Score: ${score})`);
+                toast.success(`Session Complete! Earned ${xp} XP.`);
+            }
         }
         return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive, timeLeft]);
 
     const startGame = () => {
@@ -54,14 +60,7 @@ export function TypoStriker() {
         }
     };
 
-    const endGame = () => {
-        setIsActive(false);
-        const xp = score * 5;
-        if (xp > 0) {
-            addXP(xp, `Typo Striker Reward (Score: ${score})`);
-            toast.success(`Session Complete! Earned ${xp} XP.`);
-        }
-    };
+
 
     return (
         <Card className="border-primary/20 bg-background shadow-2xl">

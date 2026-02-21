@@ -30,7 +30,7 @@ export function Sidebar({ className }: SidebarProps) {
 
     interface SidebarItem {
         title: string;
-        icon: any;
+        icon: React.ElementType;
         href: string;
         color: string;
         variant?: "premium";

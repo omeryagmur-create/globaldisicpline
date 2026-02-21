@@ -100,11 +100,10 @@ export function DashboardContent({
     });
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
+    const [ranking] = useState<number>(() => Math.floor(Math.random() * 100) + 1);
 
-    const [ranking, setRanking] = useState<number>(1);
 
     useEffect(() => {
-        setRanking(Math.floor(Math.random() * 100) + 1);
         MissionEngine.syncDailyMissions(profile.id, () => ({ title: t.missions.title }));
     }, [todaySessions.length, todayMinutes, profile.id, t.missions.title]);
 

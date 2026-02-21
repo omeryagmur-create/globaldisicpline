@@ -1,10 +1,10 @@
 "use client";
 
-import { useTimerStore, FocusMode } from "@/stores/useTimerStore";
+import { useTimerStore } from "@/stores/useTimerStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Coffee, Brain, Timer, Zap, ShieldAlert, Plus, Settings2, PlayCircle, Infinity, Trash2 } from "lucide-react";
+import { Timer, Zap, Settings2, PlayCircle, Infinity, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -15,7 +15,6 @@ export function FocusModeSelector() {
         isRunning,
         timeLeft,
         initialTime,
-        sessionType,
         setSession,
         setDuration,
         customModes,
@@ -34,20 +33,7 @@ export function FocusModeSelector() {
     // A session is considered "active" if the timer has moved or is currently running
     const isSessionActive = isRunning || (timeLeft < initialTime && timeLeft > 0);
 
-    // Sync activeView with running sequence on mount or when sequence changes
-    useEffect(() => {
-        if (currentSequenceId === 'system-pomodoro-sequence') {
-            setActiveView('pomodoro');
-        } else if (currentSequenceId === 'system-deep-focus-sequence') {
-            setActiveView('deep_focus');
-        } else if (sessionType === 'custom' && !currentSequenceId) {
-            setActiveView('custom');
-        } else if (sessionType === 'pomodoro' && !currentSequenceId) {
-            setActiveView('pomodoro');
-        } else if (sessionType === 'deep_focus' && !currentSequenceId) {
-            setActiveView('deep_focus');
-        }
-    }, [currentSequenceId, sessionType]);
+    // activeView is initialized or changed via handleSelect
 
     // ─── CLEANUP OLD SEQUENCES ──────────────────────────────────────
     useEffect(() => {
@@ -62,6 +48,7 @@ export function FocusModeSelector() {
             );
             useTimerStore.setState({ sequences: cleanSequences });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sequences.length]);
     // ──────────────────────────────────────────────────────────────
 

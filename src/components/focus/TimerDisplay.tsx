@@ -5,12 +5,7 @@ import { cn } from "@/lib/utils";
 import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-interface TimerDisplayProps {
-    size?: number;
-    strokeWidth?: number;
-}
-
-export function TimerDisplay({ size = 300, strokeWidth = 12 }: TimerDisplayProps) {
+export function TimerDisplay() {
     const { timeLeft, initialTime, isRunning, currentSequenceId, currentSequenceStep, sequences, sessionType } = useTimerStore();
     const { t } = useLanguage();
 

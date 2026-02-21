@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Gamepad2, Trophy, Lock, Zap, Activity, Clock } from "lucide-react";
+import { Gamepad2, Lock, Zap, Activity, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,17 @@ export function XPMarket() {
     const currentXP = profile?.total_xp || 0;
     const [activeFeatures, setActiveFeatures] = useState<Record<string, number>>({});
 
+    const [now, setNow] = useState<number>(() => Date.now());
+
     useEffect(() => {
         const interval = setInterval(() => {
-            const now = Date.now();
+            const current = Date.now();
+            setNow(current);
             setActiveFeatures(prev => {
                 const next = { ...prev };
                 let changed = false;
                 Object.keys(next).forEach(key => {
-                    if (next[key] < now) {
+                    if (next[key] < current) {
                         delete next[key];
                         changed = true;
                     }
@@ -80,7 +83,7 @@ export function XPMarket() {
     const getRemainingTime = (id: string) => {
         const expiry = activeFeatures[id];
         if (!expiry) return null;
-        const remaining = Math.max(0, expiry - Date.now());
+        const remaining = Math.max(0, expiry - now);
         const mins = Math.floor(remaining / 60000);
         const secs = Math.floor((remaining % 60000) / 1000);
         return `${mins}:${secs.toString().padStart(2, '0')}`;

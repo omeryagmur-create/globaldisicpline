@@ -50,7 +50,7 @@ export function PasswordResetForm() {
 
             setMessage("Check your email for the password reset link.");
             toast.success("Reset link sent!");
-        } catch (_error) {
+        } catch {
             toast.error("An unexpected error occurred");
         } finally {
             setIsLoading(false);

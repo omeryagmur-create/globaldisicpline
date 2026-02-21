@@ -1,13 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { TrendingUp, Zap, Clock } from "lucide-react";
 
 export async function PremiumInsights() {
-    const supabase = await createClient();
-
-    // In a real scenario, we'd query and group by subscription_tier.
-    // For now, we simulate the logic of a dynamic query.
-
-    // Simulate query for average study minutes
+    // In a real scenario, query and group by subscription_tier.
+    // const supabase = await createClient();
     // const { data } = await supabase.rpc('get_premium_vs_free_stats');
 
     return (

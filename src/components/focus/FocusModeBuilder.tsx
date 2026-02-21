@@ -1,15 +1,14 @@
 "use client";
 
-import { useTimerStore, FocusMode, FocusSequence } from "@/stores/useTimerStore";
+import { useTimerStore } from "@/stores/useTimerStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Layers, Flame, Clock, MinusCircle, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Layers, Flame } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { cn } from "@/lib/utils";
 
 export function FocusModeBuilder() {
-    const { addCustomMode, addSequence, customModes, sequences, deleteCustomMode } = useTimerStore();
+    const { addCustomMode, addSequence } = useTimerStore();
     const { t } = useLanguage();
 
     const [modeForm, setModeForm] = useState({
@@ -165,7 +164,7 @@ export function FocusModeBuilder() {
                                         value={cycle.type}
                                         onChange={e => {
                                             const newCycles = [...seqForm.cycles];
-                                            newCycles[idx].type = e.target.value as any;
+                                            newCycles[idx].type = e.target.value as 'focus' | 'break';
                                             setSeqForm({ ...seqForm, cycles: newCycles });
                                         }}
                                     >

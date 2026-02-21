@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import Image from "next/image";
 import { Zap, Moon, Sun, Bell, User as UserIcon, LogOut, Users, Search, Command } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
@@ -41,6 +41,7 @@ export function Navbar() {
             }
         }
         getProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleLogout = async () => {

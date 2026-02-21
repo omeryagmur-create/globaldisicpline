@@ -7,38 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 
 export function TimerLogic() {
-    const { isRunning, timeLeft, tick, sessionType, initialTime, reset, completeSession } = useTimerStore();
+    const { isRunning, timeLeft, tick, sessionType, initialTime, completeSession } = useTimerStore();
     const supabase = createClient();
 
-    useEffect(() => {
-        return () => {
-            // On unmount or if logic stops - check if survival was active
-            if (sessionType === 'survival' && isRunning && timeLeft > 0) {
-                // This is a "failure" of survival mode
-                toast.error("Survival Mode Failed! No XP earned.", {
-                    icon: "💀",
-                });
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-
-        if (isRunning && timeLeft > 0) {
-            // Use 500ms interval for more responsiveness
-            interval = setInterval(() => {
-                tick();
-            }, 500);
-        } else if (isRunning && timeLeft === 0) {
-            // Timer finished
-            handleCompletion();
-        }
-
-        return () => clearInterval(interval);
-    }, [isRunning, timeLeft, tick, sessionType]);
-
-    const handleCompletion = async () => {
+    async function handleCompletion() {
         // 1. Play sound
         const audio = new Audio("/sounds/complete.mp3"); // Ensure this file exists or use a robust solution
         audio.play().catch((e) => console.error("Audio play failed", e));
@@ -54,7 +26,7 @@ export function TimerLogic() {
                 duration_minutes: durationMinutes,
                 session_type: sessionType,
                 xp_earned: xpEarned,
-                started_at: new Date(Date.now() - initialTime * 1000).toISOString(),
+                started_at: new Date(new Date().getTime() - initialTime * 1000).toISOString(),
                 completed_at: new Date().toISOString(),
                 is_completed: true,
             });
@@ -141,8 +113,37 @@ export function TimerLogic() {
 
         // 3. Complete (handles sequence progression)
         completeSession();
-    };
+    }
 
+    useEffect(() => {
+        return () => {
+            // On unmount or if logic stops - check if survival was active
+            if (sessionType === 'survival' && isRunning && timeLeft > 0) {
+                // This is a "failure" of survival mode
+                toast.error("Survival Mode Failed! No XP earned.", {
+                    icon: "💀",
+                });
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        if (isRunning && timeLeft > 0) {
+            // Use 500ms interval for more responsiveness
+            interval = setInterval(() => {
+                tick();
+            }, 500);
+        } else if (isRunning && timeLeft === 0) {
+            // Timer finished
+            handleCompletion();
+        }
+
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRunning, timeLeft, tick, sessionType]);
     const calculateXP = (minutes: number, type: string) => {
         let multiplier = 1;
         if (type === 'deep_focus') multiplier = 1.5;

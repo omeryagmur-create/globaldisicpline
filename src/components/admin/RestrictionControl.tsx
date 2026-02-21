@@ -30,7 +30,7 @@ export function RestrictionControl() {
             });
             toast.success("Restriction applied successfully");
             setReason("");
-        } catch (_error) {
+        } catch {
             toast.error("Failed to apply restriction");
         }
     };

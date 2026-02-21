@@ -58,7 +58,7 @@ export function SignupForm() {
             toast.success(t.auth.successSignup);
             router.push("/dashboard");
             router.refresh();
-        } catch (_error) {
+        } catch {
             toast.error(t.auth.errorUnexpected);
         } finally {
             setIsLoading(false);

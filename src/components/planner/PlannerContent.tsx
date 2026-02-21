@@ -5,10 +5,11 @@ import { PlannerSetup } from "@/components/planner/PlannerSetup";
 import { PlannerView } from "@/components/planner/PlannerView";
 import { createStudyPlan, updateTask } from "@/actions/planner";
 import { BookOpen } from "lucide-react";
+import { StudyPlan, DailyTask } from "@/types/user";
 
 interface PlannerContentProps {
-    plan: any;
-    tasks: any[];
+    plan: StudyPlan | null;
+    tasks: DailyTask[];
 }
 
 export function PlannerContent({ plan, tasks }: PlannerContentProps) {

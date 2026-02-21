@@ -1,21 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, X, ShieldAlert } from "lucide-react";
+import { X, ShieldAlert } from "lucide-react";
 import { ActiveRestriction } from "@/lib/constants/restrictions";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardDescription,
-    CardTitle,
-} from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
 
 export function RestrictionBanner() {
     const [restrictions, setRestrictions] = useState<ActiveRestriction[]>([]);
     const [visible, setVisible] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
         const fetchRestrictions = async () => {
