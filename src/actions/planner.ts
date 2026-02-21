@@ -2,9 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { PlannerService } from "@/services/PlannerService";
+import { PlannerService, CreateStudyPlanData } from "@/services/PlannerService";
 
-export async function createStudyPlan(data: { examDate: string, totalWeeks: number, subjects: string[], dailyHours: number, tasks: { task_date: string, subject: string, topic: string, estimated_duration: number }[] }) {
+export async function createStudyPlan(data: CreateStudyPlanData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

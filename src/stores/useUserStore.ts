@@ -116,10 +116,9 @@ export const useUserStore = create<UserState>()(
             isRestricted: (feature) => {
                 const { activeRestrictions } = get();
                 return activeRestrictions.some(r => {
-                    const res = r as Restriction & { features?: string[] };
-                    return res.features?.includes(feature) ||
-                        res.features?.includes('all_premium_features') ||
-                        res.features?.includes('social_features_disabled');
+                    return r.features?.includes(feature) ||
+                        r.features?.includes('all_premium_features') ||
+                        r.features?.includes('social_features_disabled');
                 });
             },
         }),

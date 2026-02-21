@@ -1,7 +1,13 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 
-type SessionItem = { id: string; session_type?: string; created_at: string; xp_earned?: number; duration_minutes?: number };
+type SessionItem = {
+    id: string;
+    session_type?: string | null;
+    created_at: string;
+    xp_earned?: number | null;
+    duration_minutes?: number | null
+};
 
 export function SessionHistory({ history }: { history: SessionItem[] }) {
     if (history.length === 0) return null;
@@ -24,8 +30,8 @@ export function SessionHistory({ history }: { history: SessionItem[] }) {
                                 </p>
                             </div>
                             <div className="text-right">
-                                <span className="text-green-600 font-bold">+{session.xp_earned} XP</span>
-                                <p className="text-xs text-muted-foreground">{session.duration_minutes} min</p>
+                                <span className="text-green-600 font-bold">+{session.xp_earned || 0} XP</span>
+                                <p className="text-xs text-muted-foreground">{session.duration_minutes || 0} min</p>
                             </div>
                         </div>
                     ))}

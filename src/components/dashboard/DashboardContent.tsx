@@ -90,14 +90,11 @@ export function DashboardContent({
     const progress = Math.min(100, Math.max(0, (xpInThisLevel / xpNeededForNextLevel) * 100));
 
     const engineMissions = MissionEngine.getDailyMissions(todaySessions, todayMinutes);
-    const missions = engineMissions.map(m => {
-        let title = "";
-        let desc = "";
-        if (m.id === "1") { title = t.missions.mission1Title; desc = t.missions.mission1Desc; }
-        if (m.id === "2") { title = t.missions.mission2Title; desc = t.missions.mission2Desc; }
-        if (m.id === "3") { title = t.missions.mission3Title; desc = t.missions.mission3Desc; }
-        return { ...m, title, desc };
-    });
+    const missions = engineMissions.map(m => ({
+        ...m,
+        title: m.titleKey ? (t.missions as Record<string, string>)[m.titleKey] : "",
+        desc: m.descKey ? (t.missions as Record<string, string>)[m.descKey] : ""
+    }));
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
     const [ranking] = useState<number>(() => Math.floor(Math.random() * 100) + 1);

@@ -5,7 +5,12 @@ import { cn } from "@/lib/utils";
 import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export function TimerDisplay() {
+interface TimerDisplayProps {
+    size?: number;
+    strokeWidth?: number;
+}
+
+export function TimerDisplay({ size = 360, strokeWidth = 12 }: TimerDisplayProps) {
     const { timeLeft, initialTime, isRunning, currentSequenceId, currentSequenceStep, sequences, sessionType } = useTimerStore();
     const { t } = useLanguage();
 
@@ -36,7 +41,9 @@ export function TimerDisplay() {
                     value={progress}
                     gaugePrimaryColor={isBreak ? "rgb(16 185 129)" : "rgb(99 102 241)"}
                     gaugeSecondaryColor="rgba(255, 255, 255, 0.05)"
-                    className="size-[360px] text-5xl font-black"
+                    className="text-5xl font-black"
+                    size={size}
+                    strokeWidth={strokeWidth}
                 >
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         {/* Session Progress Indicator */}
