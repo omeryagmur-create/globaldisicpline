@@ -11,19 +11,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-    Trophy,
     Medal,
     Crown,
-    Star,
     TrendingUp,
-    ShieldAlert,
     ShieldCheck,
-    Timer,
     Zap,
-    Target
+    Target,
+    ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LEAGUE_CONFIG, LeagueTier, getLeagueTitle } from "@/lib/leagues";
+import { LEAGUE_CONFIG, LeagueTier } from "@/lib/leagues";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface LeaderboardUser {
     id: string;
@@ -44,16 +42,18 @@ interface LeaderboardTableProps {
 }
 
 export function LeaderboardTable({ users, currentUserId, prestigeMode }: LeaderboardTableProps) {
+    const { t } = useLanguage();
+
     const getRankIcon = (index: number) => {
         switch (index) {
             case 0:
-                return <Crown className="h-5 w-5 text-yellow-500 filter drop-shadow-[0_0_8px_rgba(234,179,8,0.5)] animate-pulse" />;
+                return <Crown className="h-6 w-6 text-yellow-400 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />;
             case 1:
-                return <Medal className="h-5 w-5 text-gray-400" />;
+                return <Medal className="h-6 w-6 text-slate-300" />;
             case 2:
-                return <Medal className="h-5 w-5 text-amber-700" />;
+                return <Medal className="h-6 w-6 text-amber-600" />;
             default:
-                return <span className="font-black text-muted-foreground w-5 text-center italic">{(index + 1).toString().padStart(2, '0')}</span>;
+                return <span className="font-black text-white/20 w-6 text-center text-sm">#{(index + 4)}</span>; // Starting from 4 because top 3 are in hero
         }
     };
 
@@ -62,167 +62,151 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
         const config = LEAGUE_CONFIG[t] || LEAGUE_CONFIG.Bronze;
         return {
             color: config.color,
-            borderColor: `${config.color}40`,
-            backgroundColor: `${config.color}10`,
-            boxShadow: `0 0 10px ${config.color}20`
+            borderColor: `${config.color}30`,
+            backgroundColor: `${config.color}05`,
         };
     };
 
-    return (
-        <div className="space-y-6">
-            {/* Phase 3.5: Micro-League Status Bar */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50 backdrop-blur-sm">
-                <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.3)]">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-primary/70">Tactical Pool</div>
-                        <div className="text-sm font-black tracking-tight">Region-Alpha (20 Operators)</div>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest">
-                        <ShieldCheck className="h-3 w-3" /> Promotion Zone
-                    </div>
-                </div>
-            </div>
+    const getLeagueTitleTranslated = (tier: string) => {
+        const mapping: Record<string, string> = {
+            'Bronze': t.leagues.bronzeTitle,
+            'Silver': t.leagues.silverTitle,
+            'Gold': t.leagues.goldTitle,
+            'Diamond': t.leagues.diamondTitle,
+            'Elite': t.leagues.eliteTitle,
+        };
+        return mapping[tier] || t.leagues.bronzeTitle;
+    };
 
-            <div className="rounded-2xl border border-border/50 bg-card/30 backdrop-blur-xl overflow-hidden shadow-2xl">
+    return (
+        <div className="space-y-4">
+            <div className="bg-white/5 border border-white/10 rounded-[40px] overflow-hidden backdrop-blur-3xl shadow-2xl">
                 <Table>
-                    <TableHeader className="bg-muted/50 border-b border-border/50">
-                        <TableRow className="hover:bg-transparent border-none">
-                            <TableHead className="w-[80px] text-center text-[10px] font-black uppercase tracking-widest">Rank</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Operator Identity</TableHead>
-                            <TableHead className="hidden md:table-cell text-[10px] font-black uppercase tracking-widest">Region</TableHead>
-                            <TableHead className="hidden md:table-cell text-[10px] font-black uppercase tracking-widest">Status</TableHead>
-                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest">
-                                Power ({prestigeMode ? "Weighted" : "Raw"})
+                    <TableHeader className="bg-white/[0.02] border-b border-white/5">
+                        <TableRow className="hover:bg-transparent border-none h-16">
+                            <TableHead className="w-[100px] text-center text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{t.leaderboard.rank}</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{t.leaderboard.pilotIdentity}</TableHead>
+                            <TableHead className="hidden md:table-cell text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{t.leaderboard.status}</TableHead>
+                            <TableHead className="text-right text-[10px] font-black uppercase tracking-[0.2em] text-white/40 pr-10">
+                                {t.leaderboard.totalPower}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {users.map((user, index) => {
                             const isCurrentUser = user.id === currentUserId;
-                            const leagueTitle = getLeagueTitle((user.tier || 'Bronze') as LeagueTier);
+                            const leagueTitle = getLeagueTitleTranslated(user.tier);
 
                             return (
                                 <TableRow
                                     key={user.id}
                                     className={cn(
-                                        "transition-all border-b border-border/10",
-                                        isCurrentUser ? "bg-primary/10 hover:bg-primary/20" : "hover:bg-primary/5"
+                                        "transition-all border-b border-white/5 h-20 group relative",
+                                        isCurrentUser ? "bg-indigo-500/10 hover:bg-indigo-500/20" : "hover:bg-white/[0.03]"
                                     )}
                                 >
                                     <TableCell className="font-medium text-center">
-                                        <div className="flex justify-center items-center">
+                                        <div className="flex justify-center items-center drop-shadow-xl transition-transform group-hover:scale-110 duration-500">
                                             {getRankIcon(index)}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-4">
                                             <div className="relative">
-                                                <Avatar className="h-10 w-10 border-2 border-border/50 shadow-sm">
+                                                <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur opacity-0 group-hover:opacity-40 transition-opacity" />
+                                                <Avatar className="h-12 w-12 border border-white/10 relative z-10 shadow-xl">
                                                     <AvatarImage src={user.avatar_url || ""} alt={user.full_name || "User"} />
-                                                    <AvatarFallback className="text-[10px] font-black bg-muted">
+                                                    <AvatarFallback className="text-xs font-black bg-white/5 text-white/40">
                                                         {(user.full_name || "U")[0].toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                {/* Prestige Star Placeholder for top tier players */}
-                                                {(user.tier === 'Elite' || user.tier === 'Diamond') && (
-                                                    <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 border border-background shadow-lg">
-                                                        <Star className="h-2.5 w-2.5 fill-current" />
-                                                    </div>
-                                                )}
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className={cn(
-                                                    "font-bold truncate max-w-[120px] md:max-w-xs block leading-tight tracking-tight",
-                                                    isCurrentUser && "text-primary"
+                                                    "font-black text-white tracking-tight text-base leading-tight group-hover:text-indigo-400 transition-colors",
+                                                    isCurrentUser && "text-indigo-400"
                                                 )}>
-                                                    {user.full_name || "Anonymous Operator"}
+                                                    {user.full_name || "Anonymous Pilot"}
                                                 </span>
-                                                <Badge
-                                                    variant="outline"
-                                                    className="w-fit text-[9px] px-1.5 py-0 h-4 md:hidden font-black uppercase tracking-tighter mt-0.5"
-                                                    style={getTierStyle(user.tier)}
-                                                >
-                                                    {leagueTitle}
-                                                </Badge>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {user.country && (
+                                                        <span className="text-xs mr-1 opacity-60 grayscale group-hover:grayscale-0 transition-all">{getFlagEmoji(user.country)}</span>
+                                                    )}
+                                                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                                                        {t.common.level} {user.current_level}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
-                                        {user.country ? (
-                                            <span className="text-2xl filter drop-shadow-md" title={user.country}>
-                                                {getFlagEmoji(user.country)}
-                                            </span>
-                                        ) : (
-                                            <span className="text-muted-foreground font-black text-[10px] opacity-30">NA</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell text-xs">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black text-muted-foreground uppercase opacity-70 flex items-center">
-                                                    <Target className="h-2.5 w-2.5 mr-1" />
-                                                    Lvl {user.current_level}
-                                                </span>
-                                                {user.current_streak && (
-                                                    <span className="text-[9px] font-black text-orange-500 uppercase flex items-center bg-orange-500/10 px-1 rounded">
-                                                        <TrendingUp className="h-2 w-2 mr-1" />
-                                                        {user.current_streak}D
-                                                    </span>
-                                                )}
-                                            </div>
+                                        <div className="flex items-center gap-3">
                                             <Badge
                                                 variant="outline"
-                                                className="w-fit text-[10px] px-1.5 py-0 h-5 font-black uppercase tracking-widest shadow-sm"
+                                                className="px-3 py-1 text-[10px] font-black uppercase tracking-widest border shadow-lg group-hover:scale-105 transition-transform"
                                                 style={getTierStyle(user.tier)}
                                             >
                                                 {leagueTitle}
                                             </Badge>
+                                            {user.current_streak && user.current_streak >= 3 && (
+                                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-widest">
+                                                    <TrendingUp className="h-3 w-3" />
+                                                    {t.leaderboard.onFire}
+                                                </div>
+                                            )}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-right tabular-nums">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            <span className="text-lg font-black tracking-tighter text-primary/90">
-                                                {(prestigeMode && user.weighted_xp ? user.weighted_xp : user.total_xp).toLocaleString()}
-                                            </span>
-                                            <Zap className="h-3 w-3 text-primary fill-primary" />
+                                    <TableCell className="text-right tabular-nums pr-10">
+                                        <div className="flex items-center justify-end gap-3 translate-x-2 group-hover:translate-x-0 transition-transform">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-xl font-black tracking-tighter text-white">
+                                                    {(prestigeMode && user.weighted_xp ? user.weighted_xp : user.total_xp).toLocaleString()}
+                                                </span>
+                                                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">{t.leaderboard.energyUnits}</span>
+                                            </div>
+                                            <Zap className="h-5 w-5 text-indigo-400 fill-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
+                                            <ChevronRight className="size-4 text-white/10 group-hover:text-white/40 transition-colors hidden md:block" />
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             );
                         })}
                     </TableBody>
-
                 </Table>
             </div>
 
-            {/* Loss Aversion Alert (Current User Context) */}
-            {currentUserId && (
-                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between animate-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-                            <ShieldAlert className="h-5 w-5 text-red-500" />
+            {/* Region Context Container */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-8 rounded-[40px] bg-white/5 border border-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
+                    <div className="flex items-center gap-6">
+                        <div className="h-16 w-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-2xl group-hover:rotate-6 transition-transform">
+                            <Target className="h-8 w-8 text-indigo-400" />
                         </div>
                         <div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-red-500/70">Demotion Warning</div>
-                            <div className="text-sm font-black text-white italic tracking-tight">"You are at risk of dropping to a lower rank. Defensive action required."</div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">{t.sidebar.groupCore}</div>
+                            <div className="text-xl font-black text-white">Region-Alpha Core</div>
+                            <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">20 {t.leaderboard.contender}</div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-xl border border-red-500/20">
-                        <Timer className="h-4 w-4 text-red-500 animate-pulse" />
-                        <span className="text-xs font-black text-white tabular-nums tracking-widest">47:12:04</span>
+                </div>
+
+                <div className="p-8 rounded-[40px] bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/20 flex items-center justify-between group transition-all">
+                    <div className="flex items-center gap-6">
+                        <div className="h-16 w-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-2xl group-hover:animate-pulse">
+                            <ShieldCheck className="h-8 w-8 text-emerald-400" />
+                        </div>
+                        <div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">{t.leaderboard.heroWinStatus}</div>
+                            <div className="text-xl font-black text-white">{t.leaderboard.heroSecure}</div>
+                            <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">Currently in Top 15% Rank</div>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
 
-// Helper to convert country code to flag emoji
 function getFlagEmoji(countryCode: string) {
     if (!countryCode) return '';
     const codePoints = countryCode

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "react-hot-toast";
 
 export function TimerLogic() {
-    const { isRunning, timeLeft, tick, sessionType, initialTime, reset } = useTimerStore();
+    const { isRunning, timeLeft, tick, sessionType, initialTime, reset, completeSession } = useTimerStore();
     const supabase = createClient();
 
     useEffect(() => {
@@ -26,9 +26,10 @@ export function TimerLogic() {
         let interval: NodeJS.Timeout;
 
         if (isRunning && timeLeft > 0) {
+            // Use 500ms interval for more responsiveness
             interval = setInterval(() => {
                 tick();
-            }, 1000);
+            }, 500);
         } else if (isRunning && timeLeft === 0) {
             // Timer finished
             handleCompletion();
@@ -62,21 +63,84 @@ export function TimerLogic() {
                 toast.error("Failed to save session: " + error.message);
             } else {
                 toast.success(`Session complete! You earned ${xpEarned} XP.`);
-                // Note: Trigger in DB should update user total_xp ideally, or we do it here/via RPC.
-                // For now, let's assume DB trigger handles stats or we call RPC. 
-                // We have `update_user_xp` function in 004_functions.sql
+
+                // Award XP for the session
                 await supabase.rpc('update_user_xp', {
                     p_user_id: user.id,
                     p_xp_amount: xpEarned
                 });
+
+                // ─── MISSION REWARD LOGIC ──────────────────────────────────────
+                // Check for daily missions
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+
+                // Fetch today's sessions (including the one we just saved)
+                const { data: todaySessions } = await supabase
+                    .from("focus_sessions")
+                    .select("*")
+                    .eq("user_id", user.id)
+                    .eq("is_completed", true)
+                    .gte("completed_at", startOfToday.toISOString());
+
+                if (todaySessions) {
+                    const missionCriteriaLine = [
+                        {
+                            id: "1",
+                            reward: 150,
+                            met: todaySessions.some(s => s.session_type === 'deep_focus')
+                        },
+                        {
+                            id: "2",
+                            reward: 300,
+                            met: todaySessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0) >= 120
+                        },
+                        {
+                            id: "3",
+                            reward: 100,
+                            met: todaySessions.filter(s => !s.session_type?.startsWith('reward_')).length >= 3
+                        }
+                    ];
+
+                    for (const mission of missionCriteriaLine) {
+                        const missionKey = `reward_mission_${mission.id}`;
+                        const alreadyAwarded = todaySessions.some(s => s.session_type === missionKey);
+
+                        if (mission.met && !alreadyAwarded) {
+                            // Insert reward record
+                            await supabase.from("focus_sessions").insert({
+                                user_id: user.id,
+                                duration_minutes: 0,
+                                session_type: missionKey,
+                                xp_earned: mission.reward,
+                                started_at: new Date().toISOString(),
+                                completed_at: new Date().toISOString(),
+                                is_completed: true,
+                                notes: `Daily Mission ${mission.id} Reward`
+                            });
+
+                            // Award Mission XP
+                            await supabase.rpc('update_user_xp', {
+                                p_user_id: user.id,
+                                p_xp_amount: mission.reward
+                            });
+
+                            toast.success(`Mission Accomplished! +${mission.reward} XP`, {
+                                icon: "🏆",
+                                duration: 5000
+                            });
+                        }
+                    }
+                }
+                // ──────────────────────────────────────────────────────────────
 
                 // Refresh profile to update XP/Level in navbar/dashboard
                 await useUserStore.getState().fetchProfile();
             }
         }
 
-        // 3. Reset
-        reset(); // Or stop.
+        // 3. Complete (handles sequence progression)
+        completeSession();
     };
 
     const calculateXP = (minutes: number, type: string) => {

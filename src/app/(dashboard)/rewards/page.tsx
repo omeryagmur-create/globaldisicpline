@@ -17,84 +17,87 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-
-const BADGES = [
-    {
-        id: "1",
-        title: "Early Bird",
-        description: "Complete 10 focus sessions before 08:00 AM.",
-        progress: 70,
-        unlocked: false,
-        icon: Zap,
-        color: "text-amber-500",
-        bg: "bg-amber-500/10"
-    },
-    {
-        id: "2",
-        title: "Deep Work Master",
-        description: "Focus for more than 4 hours in a single day.",
-        progress: 100,
-        unlocked: true,
-        icon: Target,
-        color: "text-purple-500",
-        bg: "bg-purple-500/10"
-    },
-    {
-        id: "3",
-        title: "Study Streak (7 Days)",
-        description: "Maintain a study streak for 7 consecutive days.",
-        progress: 42,
-        unlocked: false,
-        icon: Star,
-        color: "text-emerald-500",
-        bg: "bg-emerald-500/10"
-    },
-    {
-        id: "4",
-        title: "Community Pillar",
-        description: "Help 5 people in the study groups.",
-        progress: 100,
-        unlocked: true,
-        icon: Award,
-        color: "text-blue-500",
-        bg: "bg-blue-500/10"
-    }
-];
-
-const REWARDS = [
-    {
-        id: "r1",
-        title: "Premium Theme: Vaporwave",
-        cost: "5,000 XP",
-        image: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=200&auto=format&fit=crop",
-        type: "Cosmetic"
-    },
-    {
-        id: "r2",
-        title: "1.2x XP Booster (1 Hour)",
-        cost: "2,000 XP",
-        image: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=200&auto=format&fit=crop",
-        type: "Boost"
-    },
-    {
-        id: "r3",
-        title: "Focus Music: Lo-Fi Beats Pack",
-        cost: "3,500 XP",
-        image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=200&auto=format&fit=crop",
-        type: "Music"
-    }
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function RewardsPage() {
+    const { t } = useLanguage();
+
+    const BADGES = [
+        {
+            id: "1",
+            title: "Early Bird",
+            description: "Complete 10 focus sessions before 08:00 AM.",
+            progress: 70,
+            unlocked: false,
+            icon: Zap,
+            color: "text-amber-500",
+            bg: "bg-amber-500/10"
+        },
+        {
+            id: "2",
+            title: "Deep Work Master",
+            description: "Focus for more than 4 hours in a single day.",
+            progress: 100,
+            unlocked: true,
+            icon: Target,
+            color: "text-purple-500",
+            bg: "bg-purple-500/10"
+        },
+        {
+            id: "3",
+            title: "Study Streak (7 Days)",
+            description: "Maintain a study streak for 7 consecutive days.",
+            progress: 42,
+            unlocked: false,
+            icon: Star,
+            color: "text-emerald-500",
+            bg: "bg-emerald-500/10"
+        },
+        {
+            id: "4",
+            title: "Community Pillar",
+            description: "Help 5 people in the study groups.",
+            progress: 100,
+            unlocked: true,
+            icon: Award,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10"
+        }
+    ];
+
+    const REWARDS = [
+        {
+            id: "r1",
+            title: "Premium Theme: Vaporwave",
+            cost: "5,000 XP",
+            image: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=200&auto=format&fit=crop",
+            type: t.rewards.cosmetic
+        },
+        {
+            id: "r2",
+            title: "1.2x XP Booster (1 Hour)",
+            cost: "2,000 XP",
+            image: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=200&auto=format&fit=crop",
+            type: t.rewards.boost
+        },
+        {
+            id: "r3",
+            title: "Focus Music: Lo-Fi Beats Pack",
+            cost: "3,500 XP",
+            image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=200&auto=format&fit=crop",
+            type: t.rewards.music
+        }
+    ];
+
     return (
         <div className="container mx-auto max-w-6xl py-10 space-y-12">
             <div className="text-center space-y-4">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    <Trophy className="h-4 w-4" /> REWARD SYSTEM
+                    <Trophy className="h-4 w-4" /> {t.rewards.title}
                 </div>
-                <h1 className="text-5xl font-extrabold tracking-tight">Your Achievements</h1>
+                <h1 className="text-5xl font-extrabold tracking-tight">{t.rewards.heroTitle}</h1>
                 <p className="text-muted-foreground text-xl max-w-2xl mx-auto">
-                    Complete missions, earn XP, and unlock exclusive rewards to personalize your experience.
+                    {t.rewards.heroSubtitle}
                 </p>
             </div>
 
@@ -103,7 +106,7 @@ export default function RewardsPage() {
                 <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-none">
                     <CardContent className="pt-6 flex items-center justify-between">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium opacity-80 uppercase tracking-widest">Available XP</p>
+                            <p className="text-sm font-medium opacity-80 uppercase tracking-widest">{t.rewards.statAvailableXP}</p>
                             <h2 className="text-4xl font-black">12,450 XP</h2>
                         </div>
                         <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -114,7 +117,7 @@ export default function RewardsPage() {
                 <Card>
                     <CardContent className="pt-6 flex items-center justify-between">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Badges Earned</p>
+                            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{t.rewards.statBadgesEarned}</p>
                             <h2 className="text-4xl font-black">8 / 24</h2>
                         </div>
                         <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
@@ -125,7 +128,7 @@ export default function RewardsPage() {
                 <Card>
                     <CardContent className="pt-6 flex items-center justify-between">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Current Tier</p>
+                            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{t.rewards.statCurrentTier}</p>
                             <h2 className="text-4xl font-black">Gold</h2>
                         </div>
                         <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
@@ -138,8 +141,8 @@ export default function RewardsPage() {
             {/* Badges Section */}
             <section className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold">Badges & Milestones</h3>
-                    <Button variant="link" className="text-primary hover:no-underline font-bold">View All</Button>
+                    <h3 className="text-2xl font-bold">{t.rewards.sectionBadges}</h3>
+                    <Button variant="link" className="text-primary hover:no-underline font-bold">{t.rewards.viewAll}</Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {BADGES.map((badge) => (
@@ -165,7 +168,7 @@ export default function RewardsPage() {
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
-                                    <span>Progress</span>
+                                    <span>{t.rewards.progress}</span>
                                     <span>{badge.progress}%</span>
                                 </div>
                                 <Progress value={badge.progress} className="h-1.5" />
@@ -178,9 +181,9 @@ export default function RewardsPage() {
             {/* Shop Section */}
             <section className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold">XP Shop</h3>
+                    <h3 className="text-2xl font-bold">{t.rewards.sectionShop}</h3>
                     <div className="flex items-center gap-2 text-primary font-bold">
-                        <Gift className="h-5 w-5" /> Exchange your hard-earned XP
+                        <Gift className="h-5 w-5" /> {t.rewards.shopSubtitle}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -202,7 +205,7 @@ export default function RewardsPage() {
                                 </div>
                             </CardHeader>
                             <CardFooter>
-                                <Button className="w-full rounded-xl h-12 text-lg font-bold">Purchase Reward</Button>
+                                <Button className="w-full rounded-xl h-12 text-lg font-bold">{t.rewards.purchaseButton}</Button>
                             </CardFooter>
                         </Card>
                     ))}
@@ -213,8 +216,8 @@ export default function RewardsPage() {
             <section className="bg-muted/30 p-8 rounded-3xl border-2 border-dashed border-primary/20">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h3 className="text-2xl font-black">Daily Missions</h3>
-                        <p className="text-muted-foreground">Resets in 6 hours 12 minutes</p>
+                        <h3 className="text-2xl font-black">{t.rewards.dailyMissions}</h3>
+                        <p className="text-muted-foreground">{t.rewards.resetTime} 6 hours 12 minutes</p>
                     </div>
                 </div>
                 <div className="space-y-4">
@@ -242,7 +245,7 @@ export default function RewardsPage() {
                             <div className="flex items-center gap-4">
                                 <Badge variant="secondary" className="font-black text-primary">{mission.reward}</Badge>
                                 <Button size="sm" variant={mission.done ? "ghost" : "outline"} disabled={mission.done}>
-                                    {mission.done ? "Claimed" : "Claim"}
+                                    {mission.done ? t.rewards.claimedButton : t.rewards.claimButton}
                                 </Button>
                             </div>
                         </div>

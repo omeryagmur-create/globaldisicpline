@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTimerStore } from "@/stores/useTimerStore";
 import { cn } from "@/lib/utils";
+import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface TimerDisplayProps {
     size?: number;
@@ -10,91 +11,72 @@ interface TimerDisplayProps {
 }
 
 export function TimerDisplay({ size = 300, strokeWidth = 12 }: TimerDisplayProps) {
-    const { timeLeft, initialTime, isRunning } = useTimerStore();
+    const { timeLeft, initialTime, isRunning, currentSequenceId, currentSequenceStep, sequences, sessionType } = useTimerStore();
+    const { t } = useLanguage();
 
     const progress = initialTime > 0 ? ((initialTime - timeLeft) / initialTime) * 100 : 0;
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (progress / 100) * circumference;
+    // Sequence Info
+    const currentSequence = currentSequenceId ? sequences.find(s => s.id === currentSequenceId) : null;
+    const totalSteps = currentSequence?.cycles.length || 0;
+    const currentStepNum = currentSequenceStep + 1;
+    const isBreak = sessionType === 'short_break' || currentSequence?.cycles[currentSequenceStep]?.type === 'break';
 
     return (
         <div className="relative flex items-center justify-center">
             {/* Background Glow */}
             <div
                 className={cn(
-                    "absolute inset-0 rounded-full transition-all duration-1000 blur-3xl opacity-20",
-                    isRunning ? "bg-primary scale-110" : "bg-muted scale-100"
+                    "absolute inset-0 rounded-full transition-all duration-1000 blur-[80px] opacity-20",
+                    isRunning ? (isBreak ? "bg-emerald-500 scale-125" : "bg-indigo-500 scale-125") : "bg-white/5 scale-100"
                 )}
             />
 
-            <svg width={size} height={size} className="transform -rotate-90 relative z-10">
-                <defs>
-                    <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
-                    </linearGradient>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-                </defs>
+            <div className="relative z-10">
+                <AnimatedCircularProgressBar
+                    max={100}
+                    min={0}
+                    value={progress}
+                    gaugePrimaryColor={isBreak ? "rgb(16 185 129)" : "rgb(99 102 241)"}
+                    gaugeSecondaryColor="rgba(255, 255, 255, 0.05)"
+                    className="size-[360px] text-5xl font-black"
+                >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        {/* Session Progress Indicator */}
+                        {currentSequence && (
+                            <div className="mb-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none">
+                                    {t.focus.step} {currentStepNum} / {totalSteps}
+                                </span>
+                            </div>
+                        )}
 
-                {/* Track */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="transparent"
-                    stroke="currentColor"
-                    strokeWidth={strokeWidth}
-                    className="text-muted/10"
-                />
+                        <span className={cn(
+                            "text-7xl font-black tracking-tighter tabular-nums transition-all duration-300 text-white",
+                            !isRunning && "text-white/40"
+                        )}>
+                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                        </span>
 
-                {/* Progress */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="transparent"
-                    stroke="url(#timerGradient)"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    className="transition-all duration-1000 ease-linear"
-                    strokeLinecap="round"
-                    filter={isRunning ? "url(#glow)" : "none"}
-                />
-            </svg>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <div className="flex flex-col items-center">
-                    <span className={cn(
-                        "text-7xl font-black tracking-tighter tabular-nums transition-all duration-300",
-                        isRunning ? "text-foreground drop-shadow-sm" : "text-muted-foreground"
-                    )}>
-                        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                    </span>
-
-                    <div className={cn(
-                        "mt-4 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500",
-                        isRunning
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 animate-pulse"
-                            : "bg-muted text-muted-foreground"
-                    )}>
-                        {isRunning ? (
-                            <span className="flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-current animate-ping" />
-                                Focused State
-                            </span>
-                        ) : "Paused"}
+                        <div className={cn(
+                            "mt-6 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 border",
+                            isRunning
+                                ? (isBreak
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-lg shadow-emerald-500/10"
+                                    : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-lg shadow-indigo-500/10")
+                                : "bg-white/5 text-white/20 border-white/5"
+                        )}>
+                            {isRunning ? (
+                                <span className="flex items-center gap-2">
+                                    <span className={cn("h-2 w-2 rounded-full animate-pulse", isBreak ? "bg-emerald-400" : "bg-indigo-400")} />
+                                    {isBreak ? (initialTime > 5 * 60 ? t.focus.longBreak : t.focus.onBreak) : t.focus.focusing}
+                                </span>
+                            ) : "Engine Paused"}
+                        </div>
                     </div>
-                </div>
+                </AnimatedCircularProgressBar>
             </div>
         </div>
     );

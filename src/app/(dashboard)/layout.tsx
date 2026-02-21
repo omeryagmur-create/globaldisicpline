@@ -9,14 +9,23 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="min-h-screen text-foreground" style={{ background: 'hsl(224, 71%, 3%)' }}>
+            {/* Background Orbs */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+                <div className="orb absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/8" />
+                <div className="orb absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-violet-600/6" style={{ animationDelay: '3s' }} />
+                <div className="bg-grid absolute inset-0 opacity-100" />
+            </div>
+
             <TimerLogic />
             <Navbar />
+
             <div className="flex pt-16">
-                <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r bg-background pt-16 md:flex">
-                    <Sidebar />
-                </aside>
-                <main className="flex-1 px-4 py-8 md:ml-64 lg:px-8">
+                {/* Sidebar */}
+                <Sidebar />
+
+                {/* Main Content */}
+                <main className="flex-1 px-5 py-8 md:ml-64 lg:px-8 min-h-[calc(100vh-4rem)]">
                     <RestrictionBanner />
                     {children}
                 </main>

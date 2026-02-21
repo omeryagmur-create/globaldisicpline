@@ -3,18 +3,19 @@
 import { useTimerStore, FocusMode, FocusSequence } from "@/stores/useTimerStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Trash2, Layers, Flame, Clock } from "lucide-react";
+import { Plus, Trash2, Layers, Flame, Clock, MinusCircle, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { cn } from "@/lib/utils";
 
 export function FocusModeBuilder() {
     const { addCustomMode, addSequence, customModes, sequences, deleteCustomMode } = useTimerStore();
+    const { t } = useLanguage();
 
     const [modeForm, setModeForm] = useState({
         name: "",
         duration: 25,
         breakDuration: 5,
-        xpMultiplier: 1.0,
         intensity: "medium" as const
     });
 
@@ -33,10 +34,10 @@ export function FocusModeBuilder() {
             name: modeForm.name,
             duration: modeForm.duration * 60,
             breakDuration: modeForm.breakDuration * 60,
-            xpMultiplier: modeForm.xpMultiplier,
+            xpMultiplier: 1.0,
             intensity: modeForm.intensity
         });
-        setModeForm({ name: "", duration: 25, breakDuration: 5, xpMultiplier: 1.0, intensity: "medium" });
+        setModeForm({ name: "", duration: 25, breakDuration: 5, intensity: "medium" });
     };
 
     const handleAddSeqCycle = () => {
@@ -46,119 +47,177 @@ export function FocusModeBuilder() {
         }));
     };
 
+    const handleRemoveStep = (index: number) => {
+        if (seqForm.cycles.length <= 1) return;
+        setSeqForm(prev => ({
+            ...prev,
+            cycles: prev.cycles.filter((_, i) => i !== index)
+        }));
+    };
+
     const handleAddSequence = () => {
         if (!seqForm.name) return;
         addSequence({
             id: Math.random().toString(36).substring(7),
             name: seqForm.name,
-            cycles: seqForm.cycles.map(c => ({ ...c, duration: c.duration * 60 }))
+            cycles: seqForm.cycles.map(c => ({ ...c, duration: Number(c.duration) * 60 }))
         });
         setSeqForm({ name: "", cycles: [{ duration: 25, type: "focus" }] });
     };
 
     return (
-        <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                    <CardTitle className="text-xl flex items-center">
-                        <Flame className="mr-2 h-5 w-5 text-orange-500" />
-                        Create Custom Mode
-                    </CardTitle>
-                    <CardDescription>Define a specific focus environment.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Input
-                        placeholder="Mode Name (e.g. War Mode)"
-                        value={modeForm.name}
-                        onChange={e => setModeForm({ ...modeForm, name: e.target.value })}
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase">Work (Min)</label>
-                            <Input
-                                type="number"
-                                value={modeForm.duration}
-                                onChange={e => setModeForm({ ...modeForm, duration: parseInt(e.target.value) })}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase">Break (Min)</label>
-                            <Input
-                                type="number"
-                                value={modeForm.breakDuration}
-                                onChange={e => setModeForm({ ...modeForm, breakDuration: parseInt(e.target.value) })}
-                            />
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase">XP Multiplier</label>
-                        <Input
-                            type="number"
-                            step="0.1"
-                            value={modeForm.xpMultiplier}
-                            onChange={e => setModeForm({ ...modeForm, xpMultiplier: parseFloat(e.target.value) })}
-                        />
-                    </div>
-                    <Button className="w-full" onClick={handleAddMode}>
-                        <Plus className="mr-2 h-4 w-4" /> Save Mode
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card className="border-orange-500/20 bg-orange-500/5">
-                <CardHeader>
-                    <CardTitle className="text-xl flex items-center">
-                        <Layers className="mr-2 h-5 w-5 text-orange-500" />
-                        Build Focus Sequence
-                    </CardTitle>
-                    <CardDescription>Chain multiple sessions together.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Input
-                        placeholder="Sequence Name"
-                        value={seqForm.name}
-                        onChange={e => setSeqForm({ ...seqForm, name: e.target.value })}
-                    />
-                    <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
-                        {seqForm.cycles.map((cycle, idx) => (
-                            <div key={idx} className="flex items-center space-x-2 bg-background/50 p-2 rounded-lg border border-border/50">
-                                <span className="text-xs font-bold w-4">{idx + 1}.</span>
-                                <select
-                                    className="bg-transparent text-sm focus:outline-none"
-                                    value={cycle.type}
-                                    onChange={e => {
-                                        const newCycles = [...seqForm.cycles];
-                                        newCycles[idx].type = e.target.value as any;
-                                        setSeqForm({ ...seqForm, cycles: newCycles });
-                                    }}
-                                >
-                                    <option value="focus">Focus</option>
-                                    <option value="break">Break</option>
-                                </select>
-                                <Input
-                                    type="number"
-                                    className="h-8 w-16"
-                                    value={cycle.duration}
-                                    onChange={e => {
-                                        const newCycles = [...seqForm.cycles];
-                                        newCycles[idx].duration = parseInt(e.target.value);
-                                        setSeqForm({ ...seqForm, cycles: newCycles });
-                                    }}
-                                />
-                                <span className="text-xs text-muted-foreground">m</span>
+        <div className="space-y-6 pb-12">
+            <div className="grid gap-8 grid-cols-1">
+                {/* Custom Mode Builder */}
+                <div className="relative group/card">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-[2rem] blur opacity-75 group-hover/card:opacity-100 transition duration-1000 group-hover/card:duration-200"></div>
+                    <div className="relative flex flex-col h-full rounded-[2rem] bg-[#0A0A0B] border border-white/[0.08] p-8 space-y-6 overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-indigo-400">
+                                    <Flame className="h-4 w-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.focus.createMode}</span>
+                                </div>
+                                <p className="text-xs text-white/40">{t.focus.createModeDesc}</p>
                             </div>
-                        ))}
-                    </div>
-                    <div className="flex space-x-2">
-                        <Button variant="outline" className="flex-1" onClick={handleAddSeqCycle}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Step
+                        </div>
+
+                        {/* Form */}
+                        <div className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.focus.sequencePlaceholder}</label>
+                                <Input
+                                    placeholder={t.focus.modePlaceholder}
+                                    value={modeForm.name}
+                                    onChange={e => setModeForm({ ...modeForm, name: e.target.value })}
+                                    className="bg-white/[0.03] border-white/[0.06] rounded-2xl h-12 px-5 focus:ring-indigo-500/50"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.focus.workMin}</label>
+                                    <Input
+                                        type="number"
+                                        value={modeForm.duration}
+                                        onChange={e => setModeForm({ ...modeForm, duration: parseInt(e.target.value) })}
+                                        className="bg-white/[0.03] border-white/[0.06] rounded-2xl h-12 px-5 text-center font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.focus.breakMin}</label>
+                                    <Input
+                                        type="number"
+                                        value={modeForm.breakDuration}
+                                        onChange={e => setModeForm({ ...modeForm, breakDuration: parseInt(e.target.value) })}
+                                        className="bg-white/[0.03] border-white/[0.06] rounded-2xl h-12 px-5 text-center font-bold"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            className="w-full h-12 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all"
+                            onClick={handleAddMode}
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> {t.focus.saveMode}
                         </Button>
-                        <Button className="flex-1" onClick={handleAddSequence}>
-                            Save Sequence
-                        </Button>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+
+                {/* Focus Sequence Builder */}
+                <div className="relative group/card">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 to-rose-500/20 rounded-[2rem] blur opacity-75 group-hover/card:opacity-100 transition duration-1000 group-hover/card:duration-200"></div>
+                    <div className="relative flex flex-col h-full rounded-[2rem] bg-[#0A0A0B] border border-white/[0.08] p-8 space-y-6 overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-orange-400">
+                                    <Layers className="h-4 w-4" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.focus.buildSequence}</span>
+                                </div>
+                                <p className="text-xs text-white/40">{t.focus.buildSequenceDesc}</p>
+                            </div>
+                        </div>
+
+                        {/* Name Input */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">{t.focus.sequencePlaceholder}</label>
+                            <Input
+                                placeholder={t.focus.sequencePlaceholder}
+                                value={seqForm.name}
+                                onChange={e => setSeqForm({ ...seqForm, name: e.target.value })}
+                                className="bg-white/[0.03] border-white/[0.06] rounded-2xl h-12 px-5 focus:ring-orange-500/50"
+                            />
+                        </div>
+
+                        {/* Steps List */}
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            {seqForm.cycles.map((cycle, idx) => (
+                                <div key={idx} className="group/item flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] transition-all hover:border-white/10 hover:bg-white/[0.04]">
+                                    <div className="h-8 w-8 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[10px] font-black text-orange-400">
+                                        {idx + 1}
+                                    </div>
+
+                                    <select
+                                        className="h-9 bg-transparent text-sm font-bold text-white/70 focus:outline-none appearance-none cursor-pointer pr-4"
+                                        value={cycle.type}
+                                        onChange={e => {
+                                            const newCycles = [...seqForm.cycles];
+                                            newCycles[idx].type = e.target.value as any;
+                                            setSeqForm({ ...seqForm, cycles: newCycles });
+                                        }}
+                                    >
+                                        <option value="focus" className="bg-[#0A0A0B]">{t.focus.focus}</option>
+                                        <option value="break" className="bg-[#0A0A0B]">{t.focus.break}</option>
+                                    </select>
+
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            className="h-9 bg-white/[0.04] border-white/[0.08] rounded-xl text-center text-xs font-black p-0"
+                                            value={cycle.duration}
+                                            onChange={e => {
+                                                const newCycles = [...seqForm.cycles];
+                                                newCycles[idx].duration = parseInt(e.target.value) || 0;
+                                                setSeqForm({ ...seqForm, cycles: newCycles });
+                                            }}
+                                        />
+                                        <span className="text-[10px] font-black text-white/20 uppercase">min</span>
+                                    </div>
+
+                                    {seqForm.cycles.length > 1 && (
+                                        <button
+                                            onClick={() => handleRemoveStep(idx)}
+                                            className="p-1.5 opacity-0 group-hover/item:opacity-100 text-rose-500/50 hover:text-rose-500 transition-all active:scale-90"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3 pt-2">
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-12 rounded-2xl border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] text-[10px] font-black uppercase tracking-widest transition-all"
+                                onClick={handleAddSeqCycle}
+                            >
+                                <Plus className="mr-2 h-3 w-3" /> {t.focus.addStep}
+                            </Button>
+                            <Button
+                                className="flex-1 h-12 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all"
+                                onClick={handleAddSequence}
+                            >
+                                {t.focus.saveSequence}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -34,6 +34,7 @@ interface TimerState {
     currentSequenceStep: number;
     currentTheme: string | null;
     currentSound: string | null;
+    isZenMode: boolean;
 
     start: () => void;
     pause: (isInterruption?: boolean) => void;
@@ -48,6 +49,9 @@ interface TimerState {
     addSequence: (sequence: FocusSequence) => void;
     startSequence: (id: string) => void;
     applyMode: (id: string) => void;
+    completeSession: () => void;
+    deleteSequence: (id: string) => void;
+    toggleZenMode: () => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -67,11 +71,18 @@ export const useTimerStore = create<TimerState>()(
             currentSequenceStep: 0,
             currentTheme: null,
             currentSound: null,
+            isZenMode: false,
 
             start: () => {
                 const state = get();
                 const now = Date.now();
-                set({ isRunning: true, startedAt: now });
+
+                // If we were paused, we need to adjust startedAt to account for timeLeft
+                // timeLeft = initialTime - (now - startedAt) / 1000
+                // So, new startedAt = now - (initialTime - timeLeft) * 1000
+                const adjustedStartedAt = now - (state.initialTime - state.timeLeft) * 1000;
+
+                set({ isRunning: true, startedAt: adjustedStartedAt });
 
                 realtimeManager.publish({
                     type: 'FocusSessionStart',
@@ -86,10 +97,6 @@ export const useTimerStore = create<TimerState>()(
             pause: (isInterruption = false) => {
                 const state = get();
                 if (isInterruption && state.timeLeft > 0 && state.sessionType !== 'short_break') {
-                    // Penalty logic for early interruption
-                    console.log("Early interruption penalty applied");
-                    // We could call useUserStore.addXP(-50, 'Early Interruption Penalty') here
-                    // For now, we fire a specific event
                     realtimeManager.publish({
                         type: 'RestrictionTriggered',
                         payload: {
@@ -98,6 +105,7 @@ export const useTimerStore = create<TimerState>()(
                         }
                     });
                 }
+                // When pausing, the current timeLeft is already accurate from the last tick
                 set({ isRunning: false });
             },
 
@@ -122,40 +130,59 @@ export const useTimerStore = create<TimerState>()(
                 startedAt: null,
                 currentModeId: null,
                 currentTheme: null,
-                currentSound: null
+                currentSound: null,
+                currentSequenceId: null,
+                currentSequenceStep: 0
             }),
 
             tick: () => set((state) => {
-                if (!state.isRunning) return {};
+                if (!state.isRunning || !state.startedAt) return {};
 
-                if (state.timeLeft <= 0) {
+                const now = Date.now();
+                const secondsPassed = Math.floor((now - state.startedAt) / 1000);
+                const newTimeLeft = Math.max(0, state.initialTime - secondsPassed);
+
+                if (newTimeLeft === state.timeLeft) return {}; // No change
+
+                if (newTimeLeft === 0) {
                     realtimeManager.publish({
                         type: 'FocusSessionEnd',
                         payload: {
                             sessionId: state.startedAt?.toString() || '',
                             success: true,
-                            xpEarned: Math.floor(state.initialTime / 60) * 10 // Simple calculation
+                            xpEarned: Math.floor(state.initialTime / 60) * 10
                         }
                     });
-
-                    // Check if in a sequence
-                    if (state.currentSequenceId) {
-                        const sequence = state.sequences.find(s => s.id === state.currentSequenceId);
-                        if (sequence && state.currentSequenceStep < sequence.cycles.length - 1) {
-                            const nextStep = state.currentSequenceStep + 1;
-                            const nextCycle = sequence.cycles[nextStep];
-                            return {
-                                currentSequenceStep: nextStep,
-                                timeLeft: nextCycle.duration,
-                                initialTime: nextCycle.duration,
-                                sessionType: nextCycle.type === 'focus' ? 'custom' : 'short_break'
-                            };
-                        }
-                    }
-                    return { isRunning: false, timeLeft: 0 };
                 }
-                return { timeLeft: state.timeLeft - 1 };
+
+                return { timeLeft: newTimeLeft };
             }),
+
+            completeSession: () => {
+                const state = get();
+
+                // Check if in a sequence
+                if (state.currentSequenceId) {
+                    const sequence = state.sequences.find(s => s.id === state.currentSequenceId);
+                    if (sequence && state.currentSequenceStep < sequence.cycles.length - 1) {
+                        const nextStep = state.currentSequenceStep + 1;
+                        const nextCycle = sequence.cycles[nextStep];
+
+                        set({
+                            currentSequenceStep: nextStep,
+                            timeLeft: nextCycle.duration,
+                            initialTime: nextCycle.duration,
+                            sessionType: nextCycle.type === 'focus' ? 'custom' : 'short_break',
+                            startedAt: Date.now(),
+                            isRunning: true
+                        });
+                        return;
+                    }
+                }
+
+                // If no sequence or finished, reset
+                state.reset();
+            },
 
             setDuration: (duration) => set({
                 initialTime: duration,
@@ -173,7 +200,14 @@ export const useTimerStore = create<TimerState>()(
             })),
 
             addSequence: (sequence) => set((state) => ({
-                sequences: [...state.sequences, sequence]
+                sequences: [
+                    ...state.sequences.filter(s => s.id !== sequence.id),
+                    sequence
+                ]
+            })),
+
+            deleteSequence: (id) => set((state) => ({
+                sequences: state.sequences.filter(s => s.id !== id)
             })),
 
             startSequence: (id) => {
@@ -203,7 +237,9 @@ export const useTimerStore = create<TimerState>()(
                     currentTheme: mode.theme || null,
                     currentSound: 'ambient_focus' // Default sound for custom modes
                 });
-            }
+            },
+
+            toggleZenMode: () => set((state) => ({ isZenMode: !state.isZenMode }))
         }),
         {
             name: 'timer-storage',

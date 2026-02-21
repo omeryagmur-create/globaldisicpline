@@ -1,38 +1,37 @@
+"use client";
+
 import { LoginForm } from "@/components/auth/LoginForm";
 import Link from "next/link";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-    title: "Login - Global Discipline Engine",
-    description: "Sign in to your account",
-};
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function LoginPage() {
+    const { t } = useLanguage();
+
     return (
         <div className="flex flex-col items-center justify-center space-y-6 w-full max-w-[400px]">
             <div className="flex flex-col space-y-2 text-center">
                 <h1 className="text-3xl font-bold tracking-tighter text-foreground sm:text-4xl">
-                    Welcome Back
+                    {t.auth.loginWelcome}
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                    Enter your credentials to access your dashboard
+                    {t.auth.loginSubheading}
                 </p>
             </div>
             <LoginForm />
             <p className="px-8 text-center text-sm text-muted-foreground">
-                By clicking continue, you agree to our{" "}
+                {t.auth.agreeText}{" "}
                 <Link
                     href="/terms"
                     className="underline underline-offset-4 hover:text-primary"
                 >
-                    Terms of Service
+                    {t.auth.terms}
                 </Link>{" "}
-                and{" "}
+                {t.auth.and}{" "}
                 <Link
                     href="/privacy"
                     className="underline underline-offset-4 hover:text-primary"
                 >
-                    Privacy Policy
+                    {t.auth.privacy}
                 </Link>
                 .
             </p>

@@ -5,21 +5,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
+import { FcGoogle } from "react-icons/fc";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -27,6 +22,7 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
+    const { t } = useLanguage();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const supabase = createClient();
@@ -52,11 +48,11 @@ export function LoginForm() {
                 return;
             }
 
-            toast.success("Successfully logged in!");
+            toast.success(t.auth.successLogin);
             router.push("/dashboard");
             router.refresh();
         } catch (error) {
-            toast.error("An unexpected error occurred");
+            toast.error(t.auth.errorUnexpected);
         } finally {
             setIsLoading(false);
         }
@@ -78,98 +74,104 @@ export function LoginForm() {
     }
 
     return (
-        <Card className="w-full bg-card/50 backdrop-blur-sm border-muted/40 shadow-xl">
-            <CardHeader className="space-y-1 text-center">
-                <div className="flex justify-center mb-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Lock className="h-6 w-6 text-primary" />
+        <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto">
+            <div className="w-full border border-white/10 bg-white/5 backdrop-blur-2xl rounded-[40px] p-10 shadow-2xl space-y-8">
+                <div className="text-center space-y-2">
+                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-6">
+                        <Lock className="text-white size-8" />
                     </div>
+                    <h1 className="text-3xl font-black text-white tracking-tight">{t.auth.loginTitle}</h1>
+                    <p className="text-white/40 font-medium">{t.auth.loginSubtitle}</p>
                 </div>
-                <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
-                <CardDescription>
-                    Enter your email to sign in to your account
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid gap-2">
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                    <div className="space-y-2">
+                        <div className="relative group">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-white/30 group-focus-within:text-indigo-400 transition-colors" />
                             <Input
-                                placeholder="name@example.com"
+                                placeholder={t.auth.emailPlaceholder}
                                 type="email"
-                                className="pl-9 bg-background/50 border-input/60 focus:border-primary/50 transition-colors"
+                                className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 rounded-2xl focus:border-indigo-500/50 focus:ring-indigo-500/20 transition-all font-medium"
                                 {...form.register("email")}
                             />
                         </div>
                         {form.formState.errors.email && (
-                            <p className="text-xs text-destructive ml-1">
+                            <p className="text-xs text-red-400 font-bold ml-2">
                                 {form.formState.errors.email.message}
                             </p>
                         )}
                     </div>
-                    <div className="grid gap-2">
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+
+                    <div className="space-y-2">
+                        <div className="relative group">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-white/30 group-focus-within:text-indigo-400 transition-colors" />
                             <Input
-                                placeholder="Password"
+                                placeholder={t.auth.passwordPlaceholder}
                                 type="password"
-                                className="pl-9 bg-background/50 border-input/60 focus:border-primary/50 transition-colors"
+                                className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 rounded-2xl focus:border-indigo-500/50 focus:ring-indigo-500/20 transition-all font-medium"
                                 {...form.register("password")}
                             />
                         </div>
                         {form.formState.errors.password && (
-                            <p className="text-xs text-destructive ml-1">
+                            <p className="text-xs text-red-400 font-bold ml-2">
                                 {form.formState.errors.password.message}
                             </p>
                         )}
                     </div>
 
-                    <div className="flex items-center justify-end">
+                    <div className="flex justify-end">
                         <Link
                             href="/reset-password"
-                            className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                            tabIndex={-1}
+                            className="text-xs font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
                         >
-                            Forgot password?
+                            {t.auth.forgotPassword}
                         </Link>
                     </div>
 
-                    <Button className="w-full font-semibold shadow-lg shadow-primary/20" type="submit" disabled={isLoading}>
+                    <Button
+                        className="w-full h-14 bg-white text-black hover:bg-white/90 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-xl shadow-white/5"
+                        type="submit"
+                        disabled={isLoading}
+                    >
                         {isLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 size-6 animate-spin" />
                         ) : (
-                            "Sign In"
+                            <span className="flex items-center gap-2">{t.auth.signIn} <ArrowRight size={20} /></span>
                         )}
                     </Button>
                 </form>
 
-                <div className="relative">
+                <div className="relative py-4">
                     <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-muted/40" />
+                        <span className="w-full border-t border-white/5" />
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">
-                            Or continue with
+                    <div className="relative flex justify-center text-xs">
+                        <span className="bg-[#0b0c14] px-4 text-white/30 font-black uppercase tracking-widest">
+                            {t.auth.orContinueWith}
                         </span>
                     </div>
                 </div>
 
-                <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin} className="w-full bg-background/50 hover:bg-accent/50 border-muted/40">
-                    <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                        <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-                    </svg>
-                    Google
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isLoading}
+                    onClick={handleGoogleLogin}
+                    className="w-full h-14 bg-white/5 hover:bg-white/10 border-white/10 text-white rounded-2xl font-bold transition-all"
+                >
+                    <FcGoogle className="mr-3 size-6" />
+                    {t.auth.continueGoogle}
                 </Button>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-                <p className="text-sm text-muted-foreground">
-                    Don&apos;t have an account?{" "}
-                    <Link href="/signup" className="text-primary hover:underline font-medium transition-colors">
-                        Sign up
-                    </Link>
-                </p>
-            </CardFooter>
-        </Card>
+
+                <div className="pt-4 text-center">
+                    <p className="text-white/40 font-medium text-sm">
+                        {t.auth.newToEngine}{" "}
+                        <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-black transition-colors">
+                            {t.auth.createAccount}
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        </div>
     );
 }
