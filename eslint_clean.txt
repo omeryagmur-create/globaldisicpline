@@ -1,0 +1,45 @@
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\app\api\restrictions\active\route.ts:5 @typescript-eslint/no-unused-vars: '_request' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\admin\RestrictionControl.tsx:33 @typescript-eslint/no-unused-vars: '_error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\LoginForm.tsx:53 @typescript-eslint/no-unused-vars: '_error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\PasswordResetForm.tsx:53 @typescript-eslint/no-unused-vars: '_error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\SignupForm.tsx:61 @typescript-eslint/no-unused-vars: '_error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\development\PathSelector.tsx:13 @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:3 @typescript-eslint/no-unused-vars: 'FocusMode' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:3 @typescript-eslint/no-unused-vars: 'FocusSequence' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:6 @typescript-eslint/no-unused-vars: 'Clock' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:6 @typescript-eslint/no-unused-vars: 'MinusCircle' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:6 @typescript-eslint/no-unused-vars: 'ChevronDown' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:9 @typescript-eslint/no-unused-vars: 'cn' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:12 @typescript-eslint/no-unused-vars: 'customModes' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:12 @typescript-eslint/no-unused-vars: 'sequences' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:12 @typescript-eslint/no-unused-vars: 'deleteCustomMode' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx:168 @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeSelector.tsx:3 @typescript-eslint/no-unused-vars: 'FocusMode' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeSelector.tsx:18 @typescript-eslint/no-unused-vars: 'sessionType' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeSelector.tsx:52 react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'sequences'. Either include it or remove the dependency array.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\SessionHistory.tsx:4 @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerDisplay.tsx:13 @typescript-eslint/no-unused-vars: 'size' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerDisplay.tsx:13 @typescript-eslint/no-unused-vars: 'strokeWidth' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx:10 @typescript-eslint/no-unused-vars: 'reset' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx:128 react-hooks/exhaustive-deps: React Hook useEffect has missing dependencies: 'isRunning', 'sessionType', and 'timeLeft'. Either include them or remove the dependency array.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\games\TypoStriker.tsx:27 @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\layout\Navbar.tsx:7 @typescript-eslint/no-unused-vars: 'cn' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\layout\Navbar.tsx:44 react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\mock\WeakAreasDisplay.tsx:36 react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\AITip.tsx:1 @typescript-eslint/no-unused-vars: 'useEffect' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerSetup.tsx:30 @typescript-eslint/no-unused-vars: 'EXAM_TYPES' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerSetup.tsx:116 react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerSetup.tsx:123 @typescript-eslint/ban-ts-comment: Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerSetup.tsx:166 @typescript-eslint/ban-ts-comment: Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\ProgressChart.tsx:3 @typescript-eslint/no-unused-vars: 'Legend' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\premium\PremiumInsights.tsx:5 @typescript-eslint/no-unused-vars: 'supabase' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx:4 @typescript-eslint/no-unused-vars: 'AlertCircle' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx:9 @typescript-eslint/no-unused-vars: 'Card' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx:10 @typescript-eslint/no-unused-vars: 'CardDescription' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx:11 @typescript-eslint/no-unused-vars: 'CardTitle' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx:18 @typescript-eslint/no-unused-vars: 'supabase' is assigned a value but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\xp-market\XPMarket.tsx:7 @typescript-eslint/no-unused-vars: 'Trophy' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\xp-market\XPMarket.tsx:18 react-hooks/purity: Error: Cannot call impure function during render
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\lib\supabase\server.ts:18 @typescript-eslint/no-unused-vars: 'error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\lib\supabase\server.ts:27 @typescript-eslint/no-unused-vars: 'error' is defined but never used.
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\services\RecommendationService.ts:1 @typescript-eslint/no-unused-vars: 'Profile' is defined but never used.

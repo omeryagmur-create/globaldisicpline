@@ -1,0 +1,298 @@
+﻿
+> global-discipline-engine@0.1.0 lint
+> eslint
+
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\app\api\restrictions\active\route.ts
+  5:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\admin\RestrictionControl.tsx
+  33:18  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\LoginForm.tsx
+  53:18  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\PasswordResetForm.tsx
+  53:18  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\auth\SignupForm.tsx
+  61:18  warning  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\community\ChallengeWidget.tsx
+   6:25  warning  'Target' is defined but never used        @typescript-eslint/no-unused-vars
+  72:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\dashboard\DashboardContent.tsx
+  107:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\dashboard\DashboardContent.tsx:107:9
+  105 |
+  106 |     useEffect(() => {
+> 107 |         setRanking(Math.floor(Math.random() * 100) + 1);
+      |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  108 |         MissionEngine.syncDailyMissions(profile.id, () => ({ title: t.missions.title }));
+  109 |     }, [todaySessions.length, todayMinutes, profile.id, t.missions.title]);
+  110 |  react-hooks/set-state-in-effect
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\development\PathSelector.tsx
+  13:76  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusContent.tsx
+  38:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusContent.tsx:38:9
+  36 |
+  37 |     useEffect(() => {
+> 38 |         setActiveQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  39 |     }, [isZenMode, QUOTES]);
+  40 |
+  41 |     const features = [  react-hooks/set-state-in-effect
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeBuilder.tsx
+    3:25  warning  'FocusMode' is defined but never used                  @typescript-eslint/no-unused-vars
+    3:36  warning  'FocusSequence' is defined but never used              @typescript-eslint/no-unused-vars
+    6:39  warning  'Clock' is defined but never used                      @typescript-eslint/no-unused-vars
+    6:46  warning  'MinusCircle' is defined but never used                @typescript-eslint/no-unused-vars
+    6:59  warning  'ChevronDown' is defined but never used                @typescript-eslint/no-unused-vars
+    9:10  warning  'cn' is defined but never used                         @typescript-eslint/no-unused-vars
+   12:41  warning  'customModes' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   12:54  warning  'sequences' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   12:65  warning  'deleteCustomMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  168:85  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeSelector.tsx
+   3:25  warning  'FocusMode' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   7:10  warning  'Coffee' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   7:18  warning  'Brain' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   7:37  warning  'ShieldAlert' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   7:50  warning  'Plus' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+  40:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\FocusModeSelector.tsx:40:13
+  38 |     useEffect(() => {
+  39 |         if (currentSequenceId === 'system-pomodoro-sequence') {
+> 40 |             setActiveView('pomodoro');
+     |             ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |         } else if (currentSequenceId === 'system-deep-focus-sequence') {
+  42 |             setActiveView('deep_focus');
+  43 |         } else if (sessionType === 'custom' && !currentSequenceId) {  react-hooks/set-state-in-effect
+  65:8   warning  React Hook useEffect has a missing dependency: 'sequences'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\SessionHistory.tsx
+  4:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerControls.tsx
+  68:41  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerDisplay.tsx
+  13:32  warning  'size' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  13:44  warning  'strokeWidth' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx
+  10:66  warning  'reset' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  23:8   warning  React Hook useEffect has missing dependencies: 'isRunning', 'sessionType', and 'timeLeft'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  35:13  error    Error: Cannot access variable before it is declared
+
+`handleCompletion` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx:35:13
+  33 |         } else if (isRunning && timeLeft === 0) {
+  34 |             // Timer finished
+> 35 |             handleCompletion();
+     |             ^^^^^^^^^^^^^^^^ `handleCompletion` accessed before it is declared
+  36 |         }
+  37 |
+  38 |         return () => clearInterval(interval);
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx:41:5
+   39 |     }, [isRunning, timeLeft, tick, sessionType]);
+   40 |
+>  41 |     const handleCompletion = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  42 |         // 1. Play sound
+      | ^^^^^^^^^^^^^^^^^^^^^^^^
+>  43 |         const audio = new Audio("/sounds/complete.mp3"); // Ensure this file exists or use a robust solution
+      ÔÇĞ
+      | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 143 |         completeSession();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 144 |     };
+      | ^^^^^^^ `handleCompletion` is declared here
+  145 |
+  146 |     const calculateXP = (minutes: number, type: string) => {
+  147 |         let multiplier = 1;  react-hooks/immutability
+  39:8   warning  React Hook useEffect has a missing dependency: 'handleCompletion'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  57:38  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\focus\TimerLogic.tsx:57:38
+  55 |                 session_type: sessionType,
+  56 |                 xp_earned: xpEarned,
+> 57 |                 started_at: new Date(Date.now() - initialTime * 1000).toISOString(),
+     |                                      ^^^^^^^^^^ Cannot call impure function
+  58 |                 completed_at: new Date().toISOString(),
+  59 |                 is_completed: true,
+  60 |             });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/purity
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\games\TypoStriker.tsx
+  27:23  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  31:13  error    Error: Cannot access variable before it is declared
+
+`endGame` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\games\TypoStriker.tsx:31:13
+  29 |             interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+  30 |         } else if (timeLeft === 0 && isActive) {
+> 31 |             endGame();
+     |             ^^^^^^^ `endGame` accessed before it is declared
+  32 |         }
+  33 |         return () => clearInterval(interval);
+  34 |     }, [isActive, timeLeft]);
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\games\TypoStriker.tsx:57:5
+  55 |     };
+  56 |
+> 57 |     const endGame = () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |         setIsActive(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |         const xp = score * 5;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |         if (xp > 0) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 61 |             addXP(xp, `Typo Striker Reward (Score: ${score})`);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |             toast.success(`Session Complete! Earned ${xp} XP.`);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 64 |     };
+     | ^^^^^^^ `endGame` is declared here
+  65 |
+  66 |     return (
+  67 |         <Card className="border-primary/20 bg-background shadow-2xl">  react-hooks/immutability
+  34:8   warning  React Hook useEffect has a missing dependency: 'endGame'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\layout\Navbar.tsx
+   7:10  warning  'cn' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+  44:8   warning  React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\layout\Sidebar.tsx
+  33:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\mock\UploadForm.tsx
+    8:37  warning  'Plus' is defined but never used                    @typescript-eslint/no-unused-vars
+   33:46  warning  'CardFooter' is defined but never used              @typescript-eslint/no-unused-vars
+   82:11  warning  'watchExamType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  151:25  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\mock\WeakAreasDisplay.tsx
+  36:58  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\AITip.tsx
+  16:39  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\AITip.tsx:16:39
+  14 |
+  15 | export function AITip() {
+> 16 |     const randomTip = TIPS[Math.floor(Math.random() * TIPS.length)];
+     |                                       ^^^^^^^^^^^^^ Cannot call impure function
+  17 |
+  18 |     return (
+  19 |         <Card className="bg-primary/5 border-primary/20">  react-hooks/purity
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerContent.tsx
+  10:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerSetup.tsx
+   30:10  warning  'EXAM_TYPES' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   45:26  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   53:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   73:76  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   75:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   81:37  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  107:75  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                      react/no-unescaped-entities
+  113:29  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  141:49  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  143:49  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  158:29  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\PlannerView.tsx
+  23:11  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  64:27  warning  'hasTasks' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\planner\ProgressChart.tsx
+  3:52  warning  'Legend' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\premium\CheckoutButton.tsx
+  27:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\premium\PremiumInsights.tsx
+  5:11  warning  'supabase' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\shared\RestrictionBanner.tsx
+   4:10  warning  'AlertCircle' is defined but never used        @typescript-eslint/no-unused-vars
+   9:5   warning  'Card' is defined but never used               @typescript-eslint/no-unused-vars
+  10:5   warning  'CardDescription' is defined but never used    @typescript-eslint/no-unused-vars
+  11:5   warning  'CardTitle' is defined but never used          @typescript-eslint/no-unused-vars
+  18:11  warning  'supabase' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\xp-market\XPMarket.tsx
+   7:20  warning  'Trophy' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  83:48  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\components\xp-market\XPMarket.tsx:83:48
+  81 |         const expiry = activeFeatures[id];
+  82 |         if (!expiry) return null;
+> 83 |         const remaining = Math.max(0, expiry - Date.now());
+     |                                                ^^^^^^^^^^ Cannot call impure function
+  84 |         const mins = Math.floor(remaining / 60000);
+  85 |         const secs = Math.floor((remaining % 60000) / 1000);
+  86 |         return `${mins}:${secs.toString().padStart(2, '0')}`;  react-hooks/purity
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\hooks\useExperiment.ts
+  24:8   warning  React Hook useEffect has a missing dependency: 'fallbackVariants'. Either include it or remove the dependency array                       react-hooks/exhaustive-deps
+  24:25  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\lib\cache.ts
+  5:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  7:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\lib\planner-utils.ts
+   1:37  warning  'format' is defined but never used                   @typescript-eslint/no-unused-vars
+  35:11  warning  'sortedSubjects' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\lib\supabase\server.ts
+  18:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  27:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\momer\Documents\Global Discipline Engine\global-discipline-engine\src\services\RecommendationService.ts
+  1:10  warning  'Profile' is defined but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 82 problems (32 errors, 50 warnings)
+

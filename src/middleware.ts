@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
         '/community',
         '/profile',
         '/premium',
-        '/admin'
+        '/system-control'
     ]
 
     const isProtectedPath = protectedPaths.some((p) => path.startsWith(p))
@@ -50,22 +50,36 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Admin route check
-    if (path.startsWith('/admin')) {
-        if (user) {
-            // Check if user is admin
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('is_admin')
-                .eq('id', user.id)
-                .single()
-
-            if (!profile?.is_admin) {
-                console.warn(`[MIDDLEWARE] Admin check failed for ${user.email}. is_admin: ${profile?.is_admin}`);
-                return NextResponse.redirect(new URL('/dashboard', request.url))
-            }
-            console.info(`[MIDDLEWARE] Admin access granted for ${user.email}`);
+    // Admin route check - SECURE PATH
+    if (path.startsWith('/system-control')) {
+        if (!user) {
+            return NextResponse.redirect(new URL('/login', request.url))
         }
+
+        // Detailed check
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+
+        console.log(`[MIDDLEWARE] Checking access for ${user.email}. Path: ${path}`);
+
+        if (error) {
+            console.error('[MIDDLEWARE] Profile fetch error:', error);
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+
+        if (!profile?.is_admin) {
+            console.warn(`[MIDDLEWARE] Access DENIED: is_admin is ${profile?.is_admin}. Full profile:`, {
+                id: profile?.id,
+                email: profile?.email,
+                is_admin: profile?.is_admin
+            });
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+
+        console.info(`[MIDDLEWARE] Access GRANTED for ${user.email}`);
     }
 
     return response

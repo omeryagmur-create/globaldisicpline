@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { useUserStore } from "@/stores/useUserStore";
 import {
     LayoutDashboard,
     Timer,
@@ -18,6 +19,7 @@ import {
     Rocket,
     Zap,
     ChevronRight,
+    ShieldCheck
 } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -27,18 +29,34 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
     const { t } = useLanguage();
+    const { profile } = useUserStore();
 
     interface SidebarItem {
         title: string;
         icon: React.ElementType;
         href: string;
         color: string;
-        variant?: "premium";
+        variant?: "premium" | "admin";
     }
 
     interface MenuGroup {
         label: string;
         items: SidebarItem[];
+    }
+
+    const accountItems: SidebarItem[] = [
+        { title: t.sidebar.profile, icon: Settings, href: "/profile", color: "text-slate-400" }
+    ];
+
+    // Push Admin link only if user is admin
+    if (profile?.is_admin) {
+        accountItems.push({
+            title: "System Control",
+            icon: ShieldCheck,
+            href: "/system-control",
+            color: "text-red-400",
+            variant: "admin"
+        });
     }
 
     const menuGroups: MenuGroup[] = [
@@ -68,9 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
         },
         {
             label: t.sidebar.groupAccount,
-            items: [
-                { title: t.sidebar.profile, icon: Settings, href: "/profile", color: "text-slate-400" },
-            ]
+            items: accountItems
         }
     ];
 
@@ -105,8 +121,9 @@ export function Sidebar({ className }: SidebarProps) {
                         </p>
                         <div className="space-y-0.5">
                             {group.items.map((item) => {
-                                const isActive = pathname === item.href;
+                                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
                                 const isPremium = item.variant === "premium";
+                                const isAdmin = item.variant === "admin";
 
                                 return (
                                     <Link key={item.href} href={item.href}>
@@ -117,6 +134,8 @@ export function Sidebar({ className }: SidebarProps) {
                                                 : "text-white/50 hover:text-white hover:bg-white/[0.05]",
                                             isPremium && !isActive && "text-amber-400/80 hover:text-amber-400 hover:bg-amber-400/10",
                                             isPremium && isActive && "bg-amber-400/15 text-amber-300",
+                                            isAdmin && !isActive && "text-red-400/80 hover:text-red-400 hover:bg-red-400/10",
+                                            isAdmin && isActive && "bg-red-500/15 text-red-400",
                                         )}>
                                             {/* Active indicator */}
                                             {isActive && (
@@ -128,6 +147,7 @@ export function Sidebar({ className }: SidebarProps) {
                                                 isActive ? item.color : "text-white/30 group-hover:text-white/60",
                                                 isActive && "scale-110",
                                                 isPremium && "text-amber-400",
+                                                isAdmin && "text-red-400",
                                             )} />
 
                                             <span className="flex-1">{item.title}</span>
