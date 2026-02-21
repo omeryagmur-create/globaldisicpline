@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { StudyPlan, DailyTask } from '@/types/user';
+import { logger } from '@/lib/logger';
+import { AnalyticsService } from './AnalyticsService';
 
 export interface CreatePlanTask {
     task_date: string;
@@ -25,7 +27,7 @@ export class PlannerService {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching study plans:', error);
+            logger.error('Error fetching study plans', error, { userId });
             throw error;
         }
 
@@ -41,7 +43,7 @@ export class PlannerService {
             .order('created_at', { ascending: true });
 
         if (error) {
-            console.error('Error fetching daily tasks:', error);
+            logger.error('Error fetching daily tasks', error, { userId, date });
             throw error;
         }
 
@@ -56,7 +58,7 @@ export class PlannerService {
             .order('task_date', { ascending: true });
 
         if (error) {
-            console.error('Error fetching tasks by plan:', error);
+            logger.error('Error fetching tasks by plan', error, { planId });
             throw error;
         }
 
@@ -64,48 +66,63 @@ export class PlannerService {
     }
 
     static async createStudyPlan(supabase: SupabaseClient, userId: string, data: CreateStudyPlanData): Promise<void> {
-        // Deactivate existing
-        await supabase
-            .from("study_plans")
-            .update({ is_active: false })
-            .eq("user_id", userId);
+        try {
+            // Deactivate existing
+            await supabase
+                .from("study_plans")
+                .update({ is_active: false })
+                .eq("user_id", userId);
 
-        // Create new plan
-        const { data: plan, error } = await supabase
-            .from("study_plans")
-            .insert({
+            // Create new plan
+            const { data: plan, error } = await supabase
+                .from("study_plans")
+                .insert({
+                    user_id: userId,
+                    exam_date: data.examDate,
+                    total_weeks: data.totalWeeks,
+                    subjects: data.subjects,
+                    daily_hours: data.dailyHours,
+                    plan_data: { generated_at: new Date().toISOString() },
+                    is_active: true
+                })
+                .select()
+                .single();
+
+            if (error || !plan) {
+                logger.error('Failed to create study plan row', error, { userId });
+                throw new Error(error?.message || "Failed to create plan");
+            }
+
+            // Create tasks
+            const tasks = data.tasks.map((task: CreatePlanTask) => ({
                 user_id: userId,
-                exam_date: data.examDate,
-                total_weeks: data.totalWeeks,
-                subjects: data.subjects,
-                daily_hours: data.dailyHours,
-                plan_data: { generated_at: new Date().toISOString() },
-                is_active: true
-            })
-            .select()
-            .single();
+                plan_id: plan.id,
+                task_date: task.task_date,
+                subject: task.subject,
+                topic: task.topic,
+                estimated_duration: task.estimated_duration,
+                is_completed: false
+            }));
 
-        if (error || !plan) {
-            throw new Error(error?.message || "Failed to create plan");
-        }
+            const { error: tasksError } = await supabase
+                .from("daily_tasks")
+                .insert(tasks);
 
-        // Create tasks
-        const tasks = data.tasks.map((task: CreatePlanTask) => ({
-            user_id: userId,
-            plan_id: plan.id,
-            task_date: task.task_date,
-            subject: task.subject,
-            topic: task.topic,
-            estimated_duration: task.estimated_duration,
-            is_completed: false
-        }));
+            if (tasksError) {
+                logger.error('Failed to insert daily tasks for plan', tasksError, { userId, planId: plan.id });
+                throw new Error(tasksError.message);
+            }
 
-        const { error: tasksError } = await supabase
-            .from("daily_tasks")
-            .insert(tasks);
+            // Track analytics
+            AnalyticsService.trackEvent('PLAN_CREATE', {
+                userId,
+                examDate: data.examDate,
+                taskCount: tasks.length
+            });
 
-        if (tasksError) {
-            throw new Error(tasksError.message);
+        } catch (error) {
+            logger.error('Exception in createStudyPlan', error, { userId });
+            throw error;
         }
     }
 
@@ -116,8 +133,12 @@ export class PlannerService {
             .eq('id', taskId);
 
         if (error) {
-            console.error('Error updating daily task:', error);
+            logger.error('Error updating daily task', error, { taskId });
             throw error;
+        }
+
+        if (updates.is_completed) {
+            AnalyticsService.trackEvent('TASK_COMPLETE', { taskId });
         }
     }
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 export type EventType =
     | 'APP_OPEN'
@@ -7,7 +8,12 @@ export type EventType =
     | 'SESSION_CANCELLED'
     | 'STREAK_BROKEN'
     | 'PREMIUM_VIEW'
-    | 'MISSION_COMPLETE';
+    | 'MISSION_COMPLETE'
+    | 'PLAN_CREATE'
+    | 'TASK_COMPLETE'
+    | 'XP_AWARDED'
+    | 'LEADERBOARD_VIEW'
+    | 'PROFILE_UPDATE';
 
 export class AnalyticsService {
     /**
@@ -17,7 +23,11 @@ export class AnalyticsService {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) return; // Only track authenticated users
+        if (!user) {
+            // Optional: log debug for missing user during tracking
+            logger.debug(`Anonymous event attempt: ${eventType}`);
+            return;
+        }
 
         try {
             const { error } = await supabase
@@ -29,10 +39,19 @@ export class AnalyticsService {
                 });
 
             if (error) {
-                console.error(`[Observability] EVENT: ANALYTICS_TRACK_FAIL | Failed to track ${eventType}:`, error);
+                logger.error(`Failed to track ${eventType}`, error, { userId: user.id, eventData });
+            } else {
+                logger.debug(`Event tracked: ${eventType}`, { userId: user.id });
             }
         } catch (error) {
-            console.error(`[Observability] EVENT: ANALYTICS_EXCEPTION | Error tracking ${eventType}:`, error);
+            logger.error(`Exception during tracking ${eventType}`, error, { userId: user.id });
         }
+    }
+
+    /**
+     * Quick helper for XP related events
+     */
+    static async trackXP(amount: number, source: string, context: Record<string, unknown> = {}) {
+        await this.trackEvent('XP_AWARDED', { amount, source, ...context });
     }
 }

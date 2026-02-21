@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/client';
 import { FocusSession } from '@/types/user';
 import { useUserStore } from '@/stores/useUserStore';
 import { toast } from 'react-hot-toast';
+import { logger } from '@/lib/logger';
 
 /** Minimal shape of a focus_sessions row returned by Supabase */
 export type FocusSessionRow = {
@@ -113,10 +114,7 @@ export class MissionEngine {
                 });
 
                 if (insertError) {
-                    console.error(
-                        `[Observability] EVENT: MISSION_AWARD_FAIL | mission=${rule.id}`,
-                        insertError
-                    );
+                    logger.error('Failed to insert reward session for mission', insertError, { ruleId: rule.id, userId });
                     continue;
                 }
 
@@ -126,10 +124,7 @@ export class MissionEngine {
                 });
 
                 if (rpcError) {
-                    console.error(
-                        `[Observability] EVENT: XP_RPC_FAIL | mission=${rule.id}`,
-                        rpcError
-                    );
+                    logger.error('Failed to update user XP via RPC for mission', rpcError, { ruleId: rule.id, userId });
                     continue;
                 }
 
@@ -138,10 +133,7 @@ export class MissionEngine {
                 useUserStore.getState().fetchProfile();
 
             } catch (e) {
-                console.error(
-                    `[Observability] EVENT: MISSION_SYNC_EXCEPTION | mission=${rule.id}`,
-                    e
-                );
+                logger.error('Unexpected exception during mission reward awarding', e, { ruleId: rule.id, userId });
             }
         }
     }
@@ -167,13 +159,14 @@ export class MissionEngine {
 
         if (!allTodaySessions) return;
 
-        const totalMinutes = allTodaySessions
-            .filter(s => !s.session_type?.startsWith('reward_'))
-            .reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
+        const typedSessions = allTodaySessions as FocusSessionRow[];
+        const totalMinutes = typedSessions
+            .filter((s: FocusSessionRow) => !s.session_type?.startsWith('reward_'))
+            .reduce((acc: number, s: FocusSessionRow) => acc + (s.duration_minutes || 0), 0);
 
         await MissionEngine.awardMissionRewards(
             userId,
-            allTodaySessions as FocusSessionRow[],
+            typedSessions,
             totalMinutes,
             getTranslations
         );

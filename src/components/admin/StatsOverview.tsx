@@ -1,31 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Clock, TrendingUp, DollarSign } from "lucide-react";
 
-export function StatsOverview() {
-    // Mock data
+interface StatsData {
+    totalUsers: number;
+    activeUsers: number;
+    totalFocusHours: number;
+    growth: number;
+    totalRevenue: number;
+    retentionD1: number;
+}
+
+export function StatsOverview({ data }: { data: StatsData }) {
     const stats = [
         {
             title: "Total Users",
-            value: "12,345",
-            change: "+12% from last month",
+            value: data.totalUsers.toLocaleString(),
+            change: `${data.growth >= 0 ? '+' : ''}${data.growth}% from last month`,
             icon: Users,
         },
         {
             title: "Active Users (7d)",
-            value: "8,920",
-            change: "+5% from last week",
+            value: data.activeUsers.toLocaleString(),
+            change: "Based on focus activity",
             icon: TrendingUp,
         },
         {
             title: "Total Focus Hours",
-            value: "1.2M",
-            change: "+15% all time",
+            value: data.totalFocusHours.toLocaleString(),
+            change: "All time total",
             icon: Clock,
         },
         {
             title: "Total Revenue",
-            value: "$45,231",
-            change: "+22% this month",
+            value: `$${data.totalRevenue.toLocaleString()}`,
+            change: "Net processed",
             icon: DollarSign,
         },
     ];
