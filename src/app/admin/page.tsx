@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
         .single();
 
     if (!profile?.is_admin) {
+        console.warn(`[Admin Page Redirect] User: ${user.email}, Profile Admin Status:`, profile?.is_admin);
         redirect("/dashboard");
     }
 
