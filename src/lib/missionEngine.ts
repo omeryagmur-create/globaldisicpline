@@ -138,37 +138,5 @@ export class MissionEngine {
         }
     }
 
-    /**
-     * syncDailyMissions: fetches today's sessions from DB then calls awardMissionRewards.
-     * Used by Dashboard's useEffect to re-check on session count change.
-     */
-    static async syncDailyMissions(
-        userId: string,
-        getTranslations: () => { title: string }
-    ): Promise<void> {
-        const supabase = createClient();
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
 
-        const { data: allTodaySessions } = await supabase
-            .from('focus_sessions')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('is_completed', true)
-            .gte('completed_at', startOfToday.toISOString());
-
-        if (!allTodaySessions) return;
-
-        const typedSessions = allTodaySessions as FocusSessionRow[];
-        const totalMinutes = typedSessions
-            .filter((s: FocusSessionRow) => !s.session_type?.startsWith('reward_'))
-            .reduce((acc: number, s: FocusSessionRow) => acc + (s.duration_minutes || 0), 0);
-
-        await MissionEngine.awardMissionRewards(
-            userId,
-            typedSessions,
-            totalMinutes,
-            getTranslations
-        );
-    }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -13,33 +13,21 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { profile, loading, fetchProfile } = useUserStore();
+    const { profile, loading } = useUserStore();
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState(false);
-
-    useEffect(() => {
-        if (!profile && !loading) {
-            fetchProfile();
-        }
-    }, [profile, loading, fetchProfile]);
+    const isAuthorized = profile?.is_admin === true;
 
     useEffect(() => {
         if (!loading && profile) {
-            // ✅ SECURITY: Check admin status from store
-            const isAdmin = profile.is_admin === true;
-
-            if (isAdmin) {
-                setIsAuthorized(true);
-            } else {
+            if (!isAuthorized) {
                 // Not an admin - redirect to dashboard
                 router.push("/dashboard");
-                setIsAuthorized(false);
             }
         } else if (!loading && !profile) {
             // Not logged in - redirect to login
             router.push("/login");
         }
-    }, [profile, loading, router]);
+    }, [profile, loading, router, isAuthorized]);
 
     if (loading) {
         return (

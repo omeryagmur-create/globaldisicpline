@@ -37,6 +37,25 @@ export class UserService {
         }
     }
 
+    static async grantXP(userId: string, amount: number, reason: string, idempotencyKey?: string): Promise<boolean> {
+        const supabase = createClient();
+        const key = idempotencyKey || crypto.randomUUID();
+
+        const { data, error } = await supabase.rpc('grant_xp', {
+            p_user_id: userId,
+            p_amount: amount,
+            p_reason: reason,
+            p_idempotency_key: key
+        });
+
+        if (error) {
+            console.error('Error granting XP via ledger:', error);
+            return false;
+        }
+
+        return data as boolean;
+    }
+
     static async signOut(): Promise<void> {
         const supabase = createClient();
         await supabase.auth.signOut();

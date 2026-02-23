@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Table,
     TableBody,
@@ -19,28 +19,82 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Search } from "lucide-react";
+import { MoreHorizontal, Search, RefreshCw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "react-hot-toast";
+import { createClient } from "@/lib/supabase/client";
 
-const MOCK_USERS = [
-    { id: "1", email: "alice@example.com", name: "Alice Johnson", tier: "Free", streak: 5, xp: 1200, joined: "2024-01-15" },
-    { id: "2", email: "bob@example.com", name: "Bob Smith", tier: "Pro", streak: 12, xp: 5400, joined: "2024-01-20" },
-    { id: "3", email: "charlie@example.com", name: "Charlie Brown", tier: "Elite", streak: 30, xp: 15200, joined: "2023-12-10" },
-    { id: "4", email: "david@example.com", name: "David Wilson", tier: "Free", streak: 0, xp: 100, joined: "2024-02-01" },
-    { id: "5", email: "eve@example.com", name: "Eve Anderson", tier: "Pro", streak: 3, xp: 2100, joined: "2024-02-05" },
-];
+interface UserRow {
+    id: string;
+    email: string;
+    full_name: string | null;
+    total_xp: number;
+    current_streak: number;
+    is_admin: boolean;
+    created_at: string;
+}
 
 export function UserManagement() {
+    const [users, setUsers] = useState<UserRow[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const filteredUsers = MOCK_USERS.filter(user =>
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    // fetchUsers is used for the refresh button
+    const fetchUsers = useCallback(async () => {
+        setLoading(true);
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from("profiles")
+            .select("id, email, full_name, total_xp, current_streak, is_admin, created_at")
+            .order("total_xp", { ascending: false })
+            .limit(100);
+
+        if (error) {
+            toast.error("Failed to fetch users");
+            setLoading(false);
+            return;
+        }
+        setUsers(data || []);
+        setLoading(false);
+    }, []);
+
+    // Initial load on mount — no setState directly in effect body
+    useEffect(() => {
+        let cancelled = false;
+        const supabase = createClient();
+        const query = supabase
+            .from("profiles")
+            .select("id, email, full_name, total_xp, current_streak, is_admin, created_at")
+            .order("total_xp", { ascending: false })
+            .limit(100);
+
+        void query.then(({ data, error }) => {
+            if (cancelled) return;
+            if (error) toast.error("Failed to fetch users");
+            else setUsers(data || []);
+            setLoading(false);
+        });
+
+        return () => { cancelled = true; };
+    }, []);
+
+    const filteredUsers = users.filter(user =>
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const formatDate = (iso: string) =>
+        new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+    const getXpTier = (xp: number) => {
+        if (xp >= 10000) return "Elite";
+        if (xp >= 3000) return "Pro";
+        return "Free";
+    };
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
                 <div className="relative w-72">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -50,8 +104,9 @@ export function UserManagement() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <Button>
-                    Export CSV
+                <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    Refresh
                 </Button>
             </div>
 
@@ -62,54 +117,81 @@ export function UserManagement() {
                             <TableHead>User</TableHead>
                             <TableHead>Tier</TableHead>
                             <TableHead>Streak</TableHead>
-                            <TableHead>XP</TableHead>
+                            <TableHead>Total XP</TableHead>
                             <TableHead>Joined</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredUsers.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium">{user.name}</span>
-                                        <span className="text-xs text-muted-foreground">{user.email}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={user.tier === 'Elite' ? 'default' : user.tier === 'Pro' ? 'secondary' : 'outline'}>
-                                        {user.tier}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center">
-                                        <span className="fire-icon mr-1">🔥</span>
-                                        {user.streak}
-                                    </div>
-                                </TableCell>
-                                <TableCell>{user.xp.toLocaleString()}</TableCell>
-                                <TableCell>{user.joined}</TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                            <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-destructive">Suspend User</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                    <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                                    Loading users from database...
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : filteredUsers.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                    {searchTerm ? "No users match your search." : "No users found."}
+                                </TableCell>
+                            </TableRow>
+                        ) : filteredUsers.map((user) => {
+                            const tier = getXpTier(user.total_xp);
+                            return (
+                                <TableRow key={user.id}>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{user.full_name || "–"}</span>
+                                            <span className="text-xs text-muted-foreground font-mono">{user.email}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={user.is_admin ? "default" : tier === "Elite" ? "default" : tier === "Pro" ? "secondary" : "outline"}>
+                                            {user.is_admin ? "Admin" : tier}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            🔥 {user.current_streak}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="font-mono">{(user.total_xp || 0).toLocaleString()}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">{formatDate(user.created_at)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => {
+                                                    navigator.clipboard.writeText(user.id);
+                                                    toast.success("User ID copied!");
+                                                }}>
+                                                    Copy User ID
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-destructive">
+                                                    Apply Restriction
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>
+
+            {!loading && (
+                <p className="text-xs text-muted-foreground text-right">
+                    Showing {filteredUsers.length} of {users.length} users (ordered by XP desc)
+                </p>
+            )}
         </div>
     );
 }

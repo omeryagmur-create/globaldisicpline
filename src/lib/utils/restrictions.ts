@@ -1,8 +1,6 @@
 import { RESTRICTION_TYPES, RESTRICTION_DURATION, ActiveRestriction } from "@/lib/constants/restrictions";
 import { addDays } from "date-fns";
-
-// Mock database for restrictions
-let MOCK_ACTIVE_RESTRICTIONS: ActiveRestriction[] = [];
+import { createClient } from "@/lib/supabase/server";
 
 export function calculateSeverity(consecutiveFailures: number): number {
     if (consecutiveFailures >= 5) return 3;
@@ -11,32 +9,46 @@ export function calculateSeverity(consecutiveFailures: number): number {
 }
 
 export function getRestrictedFeatures(type: string, level: number): string[] {
-    // This is a simplified lookup. In reality, you'd iterate RESTRICTION_TYPES
     if (type === 'feature_lock') {
         if (level === 1) return RESTRICTION_TYPES.FEATURE_LOCK.level1;
         if (level === 2) return [...RESTRICTION_TYPES.FEATURE_LOCK.level1, ...RESTRICTION_TYPES.FEATURE_LOCK.level2];
-        if (level === 3) return RESTRICTION_TYPES.FEATURE_LOCK.level3; // 'all' covers others
+        if (level === 3) return RESTRICTION_TYPES.FEATURE_LOCK.level3;
     }
     if (type === 'social_reduction') {
         if (level === 1) return RESTRICTION_TYPES.SOCIAL_REDUCTION.level1;
         if (level === 2) return [...RESTRICTION_TYPES.SOCIAL_REDUCTION.level1, ...RESTRICTION_TYPES.SOCIAL_REDUCTION.level2];
         if (level === 3) return RESTRICTION_TYPES.SOCIAL_REDUCTION.level3;
     }
-    // ... add others as needed
     return [];
 }
 
 export async function checkActiveRestrictions(userId: string): Promise<ActiveRestriction[]> {
-    // Simulate API delay
-    // await new Promise(resolve => setTimeout(resolve, 100));
+    const supabase = await createClient();
+    const now = new Date().toISOString();
 
-    // Filter by user and active status (and date)
-    const now = new Date();
-    return MOCK_ACTIVE_RESTRICTIONS.filter(r =>
-        r.userId === userId &&
-        r.isActive &&
-        new Date(r.endDate) > now
-    );
+    const { data, error } = await supabase
+        .from('restrictions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .gt('end_date', now);
+
+    if (error) {
+        console.error("Failed to fetch active restrictions from Supabase:", error);
+        return [];
+    }
+
+    return (data || []).map(r => ({
+        id: r.id,
+        userId: r.user_id,
+        type: r.type,
+        level: r.level,
+        features: r.features,
+        reason: r.reason || '',
+        startDate: r.start_date,
+        endDate: r.end_date,
+        isActive: r.is_active
+    }));
 }
 
 export function isFeatureRestricted(restrictions: ActiveRestriction[], featureName: string): boolean {
@@ -47,32 +59,39 @@ export async function applyRestriction(userId: string, type: string, severity: 1
     const duration = RESTRICTION_DURATION[severity];
     const startDate = new Date();
     const endDate = addDays(startDate, duration);
-
     const features = getRestrictedFeatures(type, severity);
 
-    const newRestriction: ActiveRestriction = {
-        id: Math.random().toString(36).substring(7),
-        userId,
-        type,
-        level: severity,
-        features,
-        reason,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        isActive: true
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from('restrictions')
+        .insert({
+            user_id: userId,
+            type,
+            level: severity,
+            features,
+            reason,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            is_active: true
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Failed to insert restriction into Supabase:", error);
+        throw new Error("Persist restriction failed");
+    }
+
+    return {
+        id: data.id,
+        userId: data.user_id,
+        type: data.type,
+        level: data.level,
+        features: data.features,
+        reason: data.reason || '',
+        startDate: data.start_date,
+        endDate: data.end_date,
+        isActive: data.is_active
     };
-
-    MOCK_ACTIVE_RESTRICTIONS.push(newRestriction);
-    console.log(`Restriction applied to user ${userId}: ${type} (Level ${severity}) for ${duration} days.`);
-
-    return newRestriction;
-}
-
-// Helper to manually add a mock restriction for testing UI
-export function addMockRestriction(userId: string) {
-    applyRestriction(userId, 'social_reduction', 2, 'Failed "Morning Focus" Challenge 3 times consecutively.');
-}
-
-export function clearMockRestrictions() {
-    MOCK_ACTIVE_RESTRICTIONS = [];
 }

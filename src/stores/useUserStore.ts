@@ -89,14 +89,18 @@ export const useUserStore = create<UserState>()(
                 const { profile } = get();
                 if (!profile) return;
 
-                const newXP = (profile.total_xp || 0) + amount;
+                const success = await UserService.grantXP(profile.id, amount, reason);
+                if (!success) {
+                    console.warn(`XP grant ignored or failed for reason: ${reason}`);
+                    return;
+                }
 
-                await get().updateProfile({ total_xp: newXP });
+                await get().fetchProfile();
 
                 realtimeManager.publish({
                     type: 'XPUpdated',
                     payload: {
-                        totalXp: newXP,
+                        totalXp: get().profile?.total_xp || 0,
                         change: amount,
                         reason
                     }

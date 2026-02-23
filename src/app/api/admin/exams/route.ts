@@ -28,12 +28,17 @@ export async function GET() {
         return adminCheck.error;
     }
 
-    return NextResponse.json({
-        systems: [
-            { id: '1', code: 'TR-YKS', name: 'YKS', country: 'Turkey' },
-            { id: '2', code: 'US-SAT', name: 'SAT', country: 'USA' }
-        ]
-    });
+    const supabase = await createClient();
+    const { data: systems, error } = await supabase
+        .from('exam_systems')
+        .select('*')
+        .order('name');
+
+    if (error) {
+        return NextResponse.json({ error: "Failed to fetch exam systems" }, { status: 500 });
+    }
+
+    return NextResponse.json({ systems });
 }
 
 export async function POST(request: Request) {
@@ -43,5 +48,21 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    return NextResponse.json({ success: true, id: Date.now().toString(), ...body });
+    const supabase = await createClient();
+
+    const { data: system, error } = await supabase
+        .from('exam_systems')
+        .insert({
+            code: body.code,
+            name: body.name,
+            country: body.country,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, ...system });
 }

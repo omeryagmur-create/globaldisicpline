@@ -1,109 +1,199 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw, Globe } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { Badge } from "@/components/ui/badge";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
-export function ExamForm() {
-    const [subjects, setSubjects] = useState([{ id: 1, name: "", topics: "" }]);
+interface ExamSystem {
+    id: string;
+    code: string;
+    name: string;
+    country: string;
+    created_at: string;
+}
 
-    const addSubject = () => {
-        setSubjects([...subjects, { id: Date.now(), name: "", topics: "" }]);
-    };
+export function ExamSystemManager() {
+    const [examSystems, setExamSystems] = useState<ExamSystem[]>([]);
+    const [loadingList, setLoadingList] = useState(true);
+    const [loadingSubmit, setLoadingSubmit] = useState(false);
 
-    const removeSubject = (id: number) => {
-        setSubjects(subjects.filter(s => s.id !== id));
-    };
+    // Form state
+    const [code, setCode] = useState("");
+    const [name, setName] = useState("");
+    const [country, setCountry] = useState("");
 
-    const handleSubjectChange = (id: number, field: string, value: string) => {
-        setSubjects(subjects.map(s => s.id === id ? { ...s, [field]: value } : s));
-    };
+    const fetchExamSystems = useCallback(async () => {
+        setLoadingList(true);
+        try {
+            const res = await fetch("/api/admin/exams");
+            if (!res.ok) throw new Error("Failed to fetch");
+            const json = await res.json();
+            setExamSystems(json.systems || []);
+        } catch {
+            toast.error("Failed to load exam systems");
+        } finally {
+            setLoadingList(false);
+        }
+    }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        fetchExamSystems();
+    }, [fetchExamSystems]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Mock save
-        toast.success("Exam system saved successfully!");
-        console.log({ subjects });
+        if (!code || !name || !country) {
+            toast.error("All fields are required");
+            return;
+        }
+        setLoadingSubmit(true);
+        try {
+            const res = await fetch("/api/admin/exams", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code, name, country }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Unknown error");
+            }
+            toast.success(`Exam system "${name}" created successfully!`);
+            setCode(""); setName(""); setCountry("");
+            await fetchExamSystems();
+        } catch (err) {
+            toast.error((err as Error).message);
+        } finally {
+            setLoadingSubmit(false);
+        }
     };
+
+    const COUNTRIES = [
+        { value: "Turkey", label: "🇹🇷 Turkey" },
+        { value: "United States", label: "🇺🇸 United States" },
+        { value: "United Kingdom", label: "🇬🇧 United Kingdom" },
+        { value: "Germany", label: "🇩🇪 Germany" },
+        { value: "France", label: "🇫🇷 France" },
+        { value: "Other", label: "🌐 Other" },
+    ];
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
-            <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-8 md:grid-cols-2">
+            {/* Add Form */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Add New Exam System</h2>
+                <form onSubmit={handleSubmit} className="space-y-4 border rounded-lg p-4 bg-card">
                     <div className="space-y-2">
-                        <Label htmlFor="code">System Code</Label>
-                        <Input id="code" placeholder="e.g. TR-YKS" required />
+                        <Label htmlFor="exam-code">System Code</Label>
+                        <Input
+                            id="exam-code"
+                            placeholder="e.g. TR-YKS"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.toUpperCase())}
+                            required
+                        />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
-                        <Select>
-                            <SelectTrigger>
+                        <Label htmlFor="exam-name">System Name</Label>
+                        <Input
+                            id="exam-name"
+                            placeholder="e.g. Yükseköğretim Kurumları Sınavı"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Country</Label>
+                        <Select value={country} onValueChange={setCountry}>
+                            <SelectTrigger id="exam-country">
                                 <SelectValue placeholder="Select country" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="tr">Turkey</SelectItem>
-                                <SelectItem value="us">United States</SelectItem>
-                                <SelectItem value="uk">United Kingdom</SelectItem>
+                                {COUNTRIES.map(c => (
+                                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="name">System Name</Label>
-                    <Input id="name" placeholder="e.g. Yükseköğretim Kurumları Sınavı" required />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="duration">Total Duration (minutes)</Label>
-                    <Input id="duration" type="number" placeholder="180" />
-                </div>
+                    <Button type="submit" className="w-full" disabled={loadingSubmit}>
+                        {loadingSubmit ? (
+                            <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
+                        ) : (
+                            <><Plus className="h-4 w-4 mr-2" />Add Exam System</>
+                        )}
+                    </Button>
+                </form>
             </div>
 
+            {/* List */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Subjects</h3>
-                    <Button type="button" variant="outline" size="sm" onClick={addSubject}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Subject
+                    <h2 className="text-xl font-semibold">Existing Systems</h2>
+                    <Button variant="outline" size="sm" onClick={fetchExamSystems} disabled={loadingList}>
+                        {loadingList ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
                 </div>
-
-                {subjects.map((subject, index) => (
-                    <div key={subject.id} className="p-4 border rounded-md space-y-4 bg-card/50">
-                        <div className="flex justify-between items-start">
-                            <h4 className="text-sm font-medium text-muted-foreground">Subject {index + 1}</h4>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => removeSubject(subject.id)} className="h-6 w-6 text-destructive hover:bg-destructive/10">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <Label>Subject Name</Label>
-                                <Input
-                                    value={subject.name}
-                                    onChange={(e) => handleSubjectChange(subject.id, 'name', e.target.value)}
-                                    placeholder="e.g. Mathematics"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Topics (comma separated)</Label>
-                                <Textarea
-                                    value={subject.topics}
-                                    onChange={(e) => handleSubjectChange(subject.id, 'topics', e.target.value)}
-                                    placeholder="Algebra, Geometry, Trigonometry..."
-                                />
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Country</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loadingList ? (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center py-8">
+                                        <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : examSystems.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                        No exam systems defined yet.
+                                    </TableCell>
+                                </TableRow>
+                            ) : examSystems.map((sys) => (
+                                <TableRow key={sys.id}>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-mono text-xs">{sys.code}</Badge>
+                                    </TableCell>
+                                    <TableCell className="font-medium">{sys.name}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground flex items-center gap-1">
+                                        <Globe className="h-3 w-3" /> {sys.country}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                {!loadingList && (
+                    <p className="text-xs text-muted-foreground">{examSystems.length} system(s) in database</p>
+                )}
             </div>
-
-            <Button type="submit" className="w-full">Save Exam System</Button>
-        </form>
+        </div>
     );
+}
+
+// Keep old export alias for any existing imports
+export { ExamSystemManager as ExamForm };
+
+// Unused subject icon — kept for future UI
+export function _SubjectIcon() {
+    return <Trash2 className="h-4 w-4" />;
 }

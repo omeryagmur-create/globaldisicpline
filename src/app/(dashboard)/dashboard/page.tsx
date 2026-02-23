@@ -26,7 +26,8 @@ async function getDashboardData() {
         recentSessionsResult,
         totalSessionsResult,
         todaySessionsResult,
-        yesterdaySessionsResult
+        yesterdaySessionsResult,
+        totalUserCountResult
     ] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
         supabase.rpc("get_total_study_minutes", { p_user_id: user.id }),
@@ -55,6 +56,8 @@ async function getDashboardData() {
             .not("session_type", "ilike", "reward_mission_%")
             .gte("completed_at", startOfYesterday)
             .lt("completed_at", startOfToday),
+        supabase.from("profiles")
+            .select("*", { count: "exact", head: true }),
     ]);
 
     let profile = profileResult.data;
@@ -71,6 +74,14 @@ async function getDashboardData() {
         profile = newProfile;
     }
 
+    // Calculate real ranking
+    const { count: higherRankCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gt('total_xp', profile?.total_xp || 0);
+
+    const ranking = (higherRankCount || 0) + 1;
+
     return {
         user,
         profile,
@@ -79,6 +90,8 @@ async function getDashboardData() {
         totalSessions: totalSessionsResult.count || 0,
         todaySessions: todaySessionsResult.data || [],
         yesterdaySessions: yesterdaySessionsResult.data || [],
+        ranking,
+        totalUserCount: totalUserCountResult.count || 1,
     };
 }
 
@@ -102,6 +115,8 @@ export default async function DashboardPage() {
             totalSessions={data.totalSessions}
             todaySessions={data.todaySessions}
             yesterdaySessions={data.yesterdaySessions}
+            ranking={data.ranking}
+            totalUserCount={data.totalUserCount}
         />
     );
 }

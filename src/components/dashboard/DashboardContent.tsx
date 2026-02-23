@@ -8,7 +8,7 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { DailyMissions } from "@/components/dashboard/DailyMissions";
 import { Clock, Trophy, Star, Zap, LayoutDashboard, Flame, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import React from "react";
 import { MissionEngine } from "@/lib/missionEngine";
 
 export interface SessionData {
@@ -46,6 +46,8 @@ interface DashboardContentProps {
     totalSessions: number;
     todaySessions: SessionData[];
     yesterdaySessions: SessionData[];
+    ranking: number;
+    totalUserCount: number;
 }
 
 export function DashboardContent({
@@ -55,7 +57,9 @@ export function DashboardContent({
     recentSessions,
     totalSessions,
     todaySessions,
-    yesterdaySessions
+    yesterdaySessions,
+    ranking,
+    totalUserCount
 }: DashboardContentProps) {
     const { t } = useLanguage();
 
@@ -76,8 +80,6 @@ export function DashboardContent({
         const diff = todayMinutes - yesterdayMinutes;
         const percent = Math.round((diff / yesterdayMinutes) * 100);
         trendType = diff >= 0 ? "up" : "down";
-        trend = `${Math.abs(percent)}% ${diff >= 0 ? t.common.yes : t.common.no}`; // Simplified for trend
-        // Actually, let's just use up/down arrows or simple words
         trend = `${Math.abs(percent)}% ${diff >= 0 ? '↑' : '↓'}`;
     }
 
@@ -97,12 +99,11 @@ export function DashboardContent({
     }));
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
-    const [ranking] = useState<number>(() => Math.floor(Math.random() * 100) + 1);
 
-
-    useEffect(() => {
-        MissionEngine.syncDailyMissions(profile.id, () => ({ title: t.missions.title }));
-    }, [todaySessions.length, todayMinutes, profile.id, t.missions.title]);
+    // Real ranking text: Top X% of all users
+    const rankingTrend = totalUserCount > 1
+        ? `Top ${Math.max(1, Math.ceil((ranking / totalUserCount) * 100))}%`
+        : t.dashboard.statTopPercent;
 
     return (
         <div className="space-y-6 pb-12 max-w-7xl mx-auto">
@@ -173,7 +174,7 @@ export function DashboardContent({
                     title={t.dashboard.statRanking}
                     value={`#${ranking}`}
                     icon={Trophy}
-                    trend={t.dashboard.statTopPercent}
+                    trend={rankingTrend}
                     trendType="up"
                     color="text-yellow-500"
                 />

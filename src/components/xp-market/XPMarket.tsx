@@ -15,9 +15,10 @@ export function XPMarket() {
     const currentXP = profile?.total_xp || 0;
     const [activeFeatures, setActiveFeatures] = useState<Record<string, number>>({});
 
-    const [now, setNow] = useState<number>(() => Date.now());
+    const [now, setNow] = useState<number>(0);
 
     useEffect(() => {
+        setTimeout(() => setNow(Date.now()), 0);
         const interval = setInterval(() => {
             const current = Date.now();
             setNow(current);
