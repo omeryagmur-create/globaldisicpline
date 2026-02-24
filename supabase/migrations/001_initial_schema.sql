@@ -132,16 +132,28 @@ CREATE TABLE IF NOT EXISTS challenge_participants (
 -- 10. restrictions tablosu
 CREATE TABLE IF NOT EXISTS restrictions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
-    restriction_type text NOT NULL, -- 'feature_lock', 'social_reduction', 'xp_penalty', 'challenge_lock'
-    severity_level integer DEFAULT 1, -- 1, 2, 3 (7, 14, 30 gün)
+    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+    type text NOT NULL, -- 'feature_lock', 'social_reduction', etc.
+    level integer NOT NULL DEFAULT 1, -- 1, 2, 3
+    features text[] NOT NULL DEFAULT '{}',
     start_date timestamptz NOT NULL DEFAULT now(),
     end_date timestamptz NOT NULL,
-    is_active boolean DEFAULT true,
-    reason text, -- 'challenge_failure', 'manual_admin'
-    consecutive_failures integer DEFAULT 1,
-    created_at timestamptz DEFAULT now()
+    is_active boolean DEFAULT true NOT NULL,
+    reason text,
+    created_at timestamptz DEFAULT now() NOT NULL
 );
+
+-- RLS for restrictions
+ALTER TABLE restrictions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own restrictions"
+ON restrictions FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can manage all restrictions"
+ON restrictions FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+
 
 -- 11. exam_systems tablosu
 CREATE TABLE IF NOT EXISTS exam_systems (

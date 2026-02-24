@@ -117,6 +117,7 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_season league_seasons%ROWTYPE;
+    v_now timestamptz := now();
 BEGIN
     SELECT * INTO v_season FROM league_seasons WHERE id = p_season_id;
     IF NOT FOUND THEN
