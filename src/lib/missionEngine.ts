@@ -118,9 +118,13 @@ export class MissionEngine {
                     continue;
                 }
 
-                const { error: rpcError } = await supabase.rpc('update_user_xp', {
+                const missionDay = new Date().toISOString().slice(0, 10);
+                const idempotencyKey = `mission-reward-${rule.id}-${userId}-${missionDay}`;
+                const { error: rpcError } = await supabase.rpc('grant_xp', {
                     p_user_id: userId,
-                    p_xp_amount: rule.reward,
+                    p_amount: rule.reward,
+                    p_reason: `mission_reward:${rule.id}`,
+                    p_idempotency_key: idempotencyKey,
                 });
 
                 if (rpcError) {

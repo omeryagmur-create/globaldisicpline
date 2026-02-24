@@ -44,10 +44,13 @@ export class FocusService {
 
             if (sessionError) throw sessionError;
 
-            // 2. Award XP via RPC
-            const { error: xpError } = await supabase.rpc('update_user_xp', {
+            // 2. Award XP via ledger-backed RPC (source of truth for seasonal leaderboard)
+            const idempotencyKey = `focus-session-${userId}-${Date.now()}-${durationMinutes}-${sessionType}`;
+            const { error: xpError } = await supabase.rpc('grant_xp', {
                 p_user_id: userId,
-                p_xp_amount: xpEarned,
+                p_amount: xpEarned,
+                p_reason: `focus_session:${sessionType}`,
+                p_idempotency_key: idempotencyKey,
             });
 
             if (xpError) {
