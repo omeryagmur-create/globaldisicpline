@@ -3,11 +3,14 @@
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Star, Zap } from "lucide-react";
 
+import { LeagueTier, LEAGUE_CONFIG } from "@/lib/leagues";
+
 interface XPProgressProps {
     currentXP: number;
     currentLevel: number;
     progress: number;
     nextLevelXP: number;
+    league?: string;
 }
 
 export function XPProgress({
@@ -15,26 +18,15 @@ export function XPProgress({
     currentLevel,
     progress,
     nextLevelXP,
+    league
 }: XPProgressProps) {
     const { t } = useLanguage();
 
-    const getLevelTitle = (level: number) => {
-        const titles: Record<number, string> = {
-            1: t.xpProgress.levelTitle_1,
-            2: t.xpProgress.levelTitle_2,
-            3: t.xpProgress.levelTitle_3,
-            4: t.xpProgress.levelTitle_4,
-            5: t.xpProgress.levelTitle_5,
-            6: t.xpProgress.levelTitle_6,
-            7: t.xpProgress.levelTitle_7,
-            8: t.xpProgress.levelTitle_8,
-            9: t.xpProgress.levelTitle_9,
-            10: t.xpProgress.levelTitle_10,
-        };
-        return titles[Math.min(level, 10)] || t.xpProgress.levelTitle_10;
-    };
+    const currentLeague = (league || 'Bronze') as LeagueTier;
+    const config = LEAGUE_CONFIG[currentLeague] || LEAGUE_CONFIG.Bronze;
+    const title = config.title;
+    const color = config.color;
 
-    const title = getLevelTitle(currentLevel);
     const xpRemaining = nextLevelXP - currentXP;
 
     return (
@@ -47,16 +39,25 @@ export function XPProgress({
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/20 flex items-center justify-center">
-                                <span className="text-lg font-black text-violet-300">{currentLevel}</span>
+                            <div className="h-12 w-12 rounded-2xl border flex items-center justify-center"
+                                style={{
+                                    backgroundColor: `${color}20`,
+                                    borderColor: `${color}40`,
+                                    color: color,
+                                    textShadow: `0 0 10px ${color}`
+                                }}>
+                                <span className="text-lg font-black">{currentLevel}</span>
                             </div>
-                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
-                                <Star className="h-2 w-2 text-white fill-white" />
+                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full flex items-center justify-center p-0.5"
+                                style={{
+                                    backgroundColor: color,
+                                }}>
+                                <Star className="h-full w-full text-black fill-black" />
                             </div>
                         </div>
                         <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">{t.xpProgress.currentRank}</p>
-                            <h3 className="text-lg font-bold text-white">{title}</h3>
+                            <h3 className="text-lg font-bold" style={{ color: color, textShadow: `0 0 10px ${color}50` }}>{title}</h3>
                         </div>
                     </div>
 

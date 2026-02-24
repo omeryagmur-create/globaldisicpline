@@ -36,6 +36,7 @@ export interface ProfileData {
     total_xp: number;
     current_streak: number;
     longest_streak: number;
+    current_league: string;
 }
 
 interface DashboardContentProps {
@@ -205,6 +206,7 @@ export function DashboardContent({
                         currentLevel={currentLevel}
                         progress={progress}
                         nextLevelXP={xpForNextLevel}
+                        league={profile.current_league}
                     />
                     <RecentActivity sessions={recentSessions} />
                 </div>
