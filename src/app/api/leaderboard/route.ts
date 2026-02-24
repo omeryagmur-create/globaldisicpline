@@ -63,9 +63,9 @@ export async function GET(request: Request) {
 
         const activeSeasonId = activeSeason.id;
 
-        // 2. Query snapshots with a manual join via two queries (more reliable than Supabase FK join)
+        // 2. Query the LIVE leaderboard view (always up to date)
         let snapshotQuery = supabase
-            .from('league_snapshots')
+            .from('live_league_leaderboard')
             .select('user_id, season_xp, league, rank_overall, rank_in_league, rank_premium_in_league')
             .eq('season_id', activeSeasonId);
 
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
         const { data: snapshots, error: snapError } = await snapshotQuery;
 
         if (snapError || !snapshots || snapshots.length === 0) {
-            // Fallback to profiles if no snapshots
+            // Fallback to basic profiles query if view is empty or errors
             const { data: profiles } = await supabase
                 .from('profiles')
                 .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')

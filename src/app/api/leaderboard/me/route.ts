@@ -12,57 +12,81 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: activeSeason, error: seasonError } = await supabase
-            .rpc('get_active_season');
+        // 1. Get user profile first (always exists)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, current_league, total_xp, full_name, subscription_tier')
+            .eq('id', user.id)
+            .single();
 
-        if (seasonError || !activeSeason || activeSeason.length === 0) {
-            return NextResponse.json({ error: 'No active season found' }, { status: 404 });
+        if (!profile) {
+            return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
         }
 
-        const activeSeasonId = activeSeason[0].id;
+        // 2. Get active season
+        const { data: activeSeason } = await supabase.from('league_seasons').select('id').eq('status', 'active').limit(1).single();
 
-        // Fetch user snapshot
-        const { data: snapshot, error: snapshotError } = await supabase
-            .from('league_snapshots')
+        if (!activeSeason) {
+            // Fallback for no active season
+            return NextResponse.json({
+                data: {
+                    rank_overall: 0,
+                    rank_in_league: 0,
+                    rank_premium_in_league: null,
+                    season_xp: profile.total_xp,
+                    league: profile.current_league || 'Bronze'
+                },
+                distances: null,
+                fallback: true
+            });
+        }
+
+        // 3. Fetch user status from LIVE view
+        const { data: snapshot } = await supabase
+            .from('live_league_leaderboard')
             .select('rank_overall, rank_in_league, rank_premium_in_league, season_xp, league')
-            .eq('season_id', activeSeasonId)
+            .eq('season_id', activeSeason.id)
             .eq('user_id', user.id)
             .single();
 
-        if (snapshotError && snapshotError.code !== 'PGRST116') {
-            console.error('Error fetching snapshot:', snapshotError);
-            return NextResponse.json({ error: 'Failed to fetch personal leaderboard rank' }, { status: 500 });
+        // 4. If no status found
+        if (!snapshot) {
+            return NextResponse.json({
+                data: {
+                    rank_overall: 0,
+                    rank_in_league: 0,
+                    rank_premium_in_league: null,
+                    season_xp: 0,
+                    league: profile.current_league || 'Bronze'
+                },
+                distances: null,
+                is_new: true
+            });
         }
 
-        // Get total users in the league to calculate distances
-        let totalInLeague = 0;
-        if (snapshot?.league) {
-            const { count, error: countError } = await supabase
-                .from('league_snapshots')
-                .select('*', { count: 'exact', head: true })
-                .eq('season_id', activeSeasonId)
-                .eq('league', snapshot.league);
-            if (!countError) {
-                totalInLeague = count || 0;
-            }
-        }
+        // 5. Get total users in league for distances FROM THE LIVE VIEW
+        const { count: totalInLeague } = await supabase
+            .from('live_league_leaderboard')
+            .select('*', { count: 'exact', head: true })
+            .eq('season_id', activeSeason.id)
+            .eq('league', snapshot.league);
 
-        let distances = null;
-        if (snapshot && totalInLeague > 0) {
-            const promoteCount = Math.floor(totalInLeague * 0.10);
-            const relegateCount = Math.floor(totalInLeague * 0.10);
+        const total = totalInLeague || 1;
 
-            distances = {
-                total_users: totalInLeague,
-                promote_threshold: promoteCount,
-                relegate_threshold: totalInLeague - relegateCount,
-                distance_to_promote: snapshot.rank_in_league - promoteCount,
-                distance_to_relegate: (totalInLeague - relegateCount) - snapshot.rank_in_league
-            };
-        }
+        // Match the logic in the settlement function (15%, min 1 if total >= 2)
+        const promoteCount = total >= 2 ? Math.max(1, Math.floor(total * 0.15)) : 0;
+        const relegateCount = total >= 5 ? Math.max(1, Math.floor(total * 0.15)) : 0;
+
+        const distances = {
+            total_users: total,
+            promote_threshold: promoteCount,
+            relegate_threshold: total - relegateCount,
+            distance_to_promote: Math.max(0, snapshot.rank_in_league - promoteCount),
+            distance_to_relegate: Math.max(0, (total - relegateCount) - snapshot.rank_in_league)
+        };
 
         return NextResponse.json({
-            data: snapshot || null,
+            data: snapshot,
             distances
         });
 

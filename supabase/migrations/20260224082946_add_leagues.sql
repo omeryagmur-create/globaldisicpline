@@ -126,7 +126,7 @@ BEGIN
     -- Delete existing snapshots for this season
     DELETE FROM league_snapshots WHERE season_id = p_season_id;
 
-    -- Insert new snapshots based on xp_ledger within season time window
+    -- Insert new snapshots including participants with 0 XP who are in the profiles table
     INSERT INTO league_snapshots (
         season_id,
         user_id,
@@ -139,7 +139,7 @@ BEGIN
     WITH xp_agg AS (
         SELECT user_id, SUM(amount) as season_xp
         FROM xp_ledger
-        WHERE created_at >= v_season.starts_at AND created_at < coalesce(v_season.ends_at, now())
+        WHERE created_at >= v_season.starts_at AND created_at < coalesce(v_season.ends_at, v_now)
         GROUP BY user_id
     ),
     user_xp AS (
@@ -156,11 +156,11 @@ BEGIN
             user_id,
             league,
             season_xp,
-            DENSE_RANK() OVER (ORDER BY season_xp DESC, user_id) as rank_overall,
-            DENSE_RANK() OVER (PARTITION BY league ORDER BY season_xp DESC, user_id) as rank_in_league,
+            RANK() OVER (ORDER BY season_xp DESC, user_id ASC) as rank_overall,
+            RANK() OVER (PARTITION BY league ORDER BY season_xp DESC, user_id ASC) as rank_in_league,
             CASE 
                 WHEN subscription_tier IN ('pro', 'premium', 'elite') THEN
-                    DENSE_RANK() OVER (PARTITION BY league, (subscription_tier IN ('pro', 'premium', 'elite')) ORDER BY season_xp DESC, user_id)
+                    RANK() OVER (PARTITION BY league, (subscription_tier IN ('pro', 'premium', 'elite')) ORDER BY season_xp DESC, user_id ASC)
                 ELSE NULL
             END as rank_premium_in_league
         FROM user_xp
