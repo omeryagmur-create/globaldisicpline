@@ -1,4 +1,4 @@
-export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Elite';
+export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Emerald' | 'Diamond' | 'Master' | 'Grandmaster';
 
 export interface LeagueInfo {
     name: LeagueTier;
@@ -34,28 +34,55 @@ export const LEAGUE_CONFIG: Record<LeagueTier, LeagueInfo> = {
         color: '#ffd700',
         description: 'Elite focus in progress. Operative status achieved.'
     },
+    Platinum: {
+        name: 'Platinum',
+        title: 'Platinum Specialist',
+        minXp: 10000,
+        multiplier: 1.3,
+        color: '#e5e4e2',
+        description: 'Advanced tactical focus.'
+    },
+    Emerald: {
+        name: 'Emerald',
+        title: 'Emerald Guardian',
+        minXp: 20000,
+        multiplier: 1.4,
+        color: '#50c878',
+        description: 'Consistent high performance.'
+    },
     Diamond: {
         name: 'Diamond',
         title: 'Diamond Vanguard',
-        minXp: 15000,
+        minXp: 40000,
         multiplier: 1.5,
         color: '#b9f2ff',
         description: 'At the forefront of productivity. Unmatched willpower.'
     },
-    Elite: {
-        name: 'Elite',
-        title: 'Elite Commander',
-        minXp: 50000,
+    Master: {
+        name: 'Master',
+        title: 'Master Sentinel',
+        minXp: 75000,
+        multiplier: 1.8,
+        color: '#9076D4',
+        description: 'Unbreakable discipline.'
+    },
+    Grandmaster: {
+        name: 'Grandmaster',
+        title: 'Grandmaster Commander',
+        minXp: 150000,
         multiplier: 2.0,
-        color: '#ff4d4d',
-        description: 'Supreme discipline. COMMAND status recognized.'
+        color: '#FF0055',
+        description: 'Supreme discipline. Highest achievable tier.'
     },
 };
 
 export function calculateLeague(xp: number, consistency: number): LeagueTier {
-    if (xp >= 50000 && consistency > 0.9) return 'Elite';
-    if (xp >= 15000 && consistency > 0.8) return 'Diamond';
-    if (xp >= 5000 && consistency > 0.7) return 'Gold';
+    if (xp >= 150000 && consistency > 0.95) return 'Grandmaster';
+    if (xp >= 75000 && consistency > 0.9) return 'Master';
+    if (xp >= 40000 && consistency > 0.8) return 'Diamond';
+    if (xp >= 20000 && consistency > 0.75) return 'Emerald';
+    if (xp >= 10000 && consistency > 0.7) return 'Platinum';
+    if (xp >= 5000 && consistency > 0.6) return 'Gold';
     if (xp >= 1000 && consistency > 0.5) return 'Silver';
     return 'Bronze';
 }

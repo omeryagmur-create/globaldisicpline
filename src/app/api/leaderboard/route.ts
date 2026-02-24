@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +12,7 @@ export async function GET(request: Request) {
         const limit = parseInt(searchParams.get('limit') || '50', 10);
         const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
 
         let activeSeasonId = seasonId;
         if (!activeSeasonId) {
@@ -40,7 +39,8 @@ export async function GET(request: Request) {
           full_name,
           avatar_url,
           country,
-          subscription_tier
+          subscription_tier,
+          current_level
         )
       `)
             .eq('season_id', activeSeasonId);

@@ -29,8 +29,9 @@ interface LeaderboardUser {
     avatar_url: string | null;
     country: string | null;
     total_xp: number;
-    current_level: number;
+    current_level?: number;
     tier: string;
+    rank: number;
     current_streak?: number;
     weighted_xp?: number;
 }
@@ -44,16 +45,16 @@ interface LeaderboardTableProps {
 export function LeaderboardTable({ users, currentUserId, prestigeMode }: LeaderboardTableProps) {
     const { t } = useLanguage();
 
-    const getRankIcon = (index: number) => {
-        switch (index) {
-            case 0:
-                return <Crown className="h-6 w-6 text-yellow-400 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />;
+    const getRankIcon = (rank: number) => {
+        switch (rank) {
             case 1:
-                return <Medal className="h-6 w-6 text-slate-300" />;
+                return <Crown className="h-6 w-6 text-yellow-400 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />;
             case 2:
+                return <Medal className="h-6 w-6 text-slate-300" />;
+            case 3:
                 return <Medal className="h-6 w-6 text-amber-600" />;
             default:
-                return <span className="font-black text-white/20 w-6 text-center text-sm">#{(index + 4)}</span>; // Starting from 4 because top 3 are in hero
+                return <span className="font-black text-white/20 w-6 text-center text-sm">#{rank}</span>;
         }
     };
 
@@ -107,7 +108,7 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
                                 >
                                     <TableCell className="font-medium text-center">
                                         <div className="flex justify-center items-center drop-shadow-xl transition-transform group-hover:scale-110 duration-500">
-                                            {getRankIcon(index)}
+                                            {getRankIcon(user.rank)}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -132,9 +133,11 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
                                                     {user.country && (
                                                         <span className="text-xs mr-1 opacity-60 grayscale group-hover:grayscale-0 transition-all">{getFlagEmoji(user.country)}</span>
                                                     )}
-                                                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                                                        {t.common.level} {user.current_level}
-                                                    </span>
+                                                    {user.current_level && (
+                                                        <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                                                            {t.common.level} {user.current_level}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -175,34 +178,6 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
                 </Table>
             </div>
 
-            {/* Region Context Container */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-8 rounded-[40px] bg-white/5 border border-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
-                    <div className="flex items-center gap-6">
-                        <div className="h-16 w-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-2xl group-hover:rotate-6 transition-transform">
-                            <Target className="h-8 w-8 text-indigo-400" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">{t.sidebar.groupCore}</div>
-                            <div className="text-xl font-black text-white">Region-Alpha Core</div>
-                            <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">20 {t.leaderboard.contender}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="p-8 rounded-[40px] bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/20 flex items-center justify-between group transition-all">
-                    <div className="flex items-center gap-6">
-                        <div className="h-16 w-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-2xl group-hover:animate-pulse">
-                            <ShieldCheck className="h-8 w-8 text-emerald-400" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">{t.leaderboard.heroWinStatus}</div>
-                            <div className="text-xl font-black text-white">{t.leaderboard.heroSecure}</div>
-                            <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">Currently in Top 15% Rank</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
