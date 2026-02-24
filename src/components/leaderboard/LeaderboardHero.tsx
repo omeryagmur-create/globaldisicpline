@@ -17,10 +17,12 @@ interface TopUser {
 
 interface LeaderboardHeroProps {
     top3: TopUser[];
+    scoreLabel?: string;
 }
 
 export const LeaderboardHero = ({
-    top3
+    top3,
+    scoreLabel
 }: LeaderboardHeroProps) => {
     const { t } = useLanguage();
     const winner = top3[0];
@@ -114,7 +116,7 @@ export const LeaderboardHero = ({
                                         {user.full_name}
                                     </h3>
                                     <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">
-                                        {user.total_xp.toLocaleString()} {t.leaderboard.energyUnits}
+                                        {user.total_xp.toLocaleString()} {scoreLabel || t.leaderboard.energyUnits}
                                     </p>
                                 </div>
                             </div>

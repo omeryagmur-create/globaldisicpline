@@ -40,9 +40,10 @@ interface LeaderboardTableProps {
     users: LeaderboardUser[];
     currentUserId?: string;
     prestigeMode?: boolean;
+    scoreLabel?: string;
 }
 
-export function LeaderboardTable({ users, currentUserId, prestigeMode }: LeaderboardTableProps) {
+export function LeaderboardTable({ users, currentUserId, prestigeMode, scoreLabel }: LeaderboardTableProps) {
     const { t } = useLanguage();
 
     const getRankIcon = (rank: number) => {
@@ -168,7 +169,7 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
                                                 <span className="text-xl font-black tracking-tighter text-white">
                                                     {(prestigeMode && user.weighted_xp ? user.weighted_xp : user.total_xp).toLocaleString()}
                                                 </span>
-                                                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">{t.leaderboard.energyUnits}</span>
+                                                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">{scoreLabel || t.leaderboard.energyUnits}</span>
                                             </div>
                                             <Zap className="h-5 w-5 text-indigo-400 fill-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
                                             <ChevronRight className="size-4 text-white/10 group-hover:text-white/40 transition-colors hidden md:block" />

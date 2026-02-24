@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -45,7 +45,7 @@ export default function LeaderboardPage() {
     const { t } = useLanguage();
     const [users, setUsers] = useState<LeaderboardUser[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string | undefined>();
-    const [mode, setMode] = useState<"overall" | "league" | "premium">("overall");
+    const [mode, setMode] = useState<"overall" | "league" | "premium" | "all_time">("overall");
     const [selectedLeague, setSelectedLeague] = useState<LeagueTier>('Bronze');
     const [myData, setMyData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
     const loadLeaderboard = useCallback(async (scope: string, league: LeagueTier, newOffset = 0, append = false) => {
         setLoading(true);
         let url = `/api/leaderboard?scope=${scope}&limit=${PAGE_SIZE}&offset=${newOffset}`;
-        if (scope !== 'overall') url += `&league=${league}`;
+        if (scope === 'league' || scope === 'premium') url += `&league=${league}`;
 
         try {
             const res = await fetch(url);
@@ -118,7 +118,7 @@ export default function LeaderboardPage() {
         }
     }, [PAGE_SIZE]);
 
-    // Reload when mode or league changes (but not on first run — already loaded in parallel)
+    // Reload when mode or league changes (but not on first run â€” already loaded in parallel)
     const [firstRun, setFirstRun] = useState(true);
     useEffect(() => {
         if (firstRun) { setFirstRun(false); return; }
@@ -128,6 +128,7 @@ export default function LeaderboardPage() {
 
     const top3 = users.slice(0, 3);
     const tableUsers = users.slice(3);
+    const scoreLabel = mode === 'all_time' ? 'TOPLAM XP' : t.leaderboard.energyUnits;
 
     const activeLeagueConfig = LEAGUE_CONFIG[selectedLeague] || LEAGUE_CONFIG.Bronze;
 
@@ -160,34 +161,39 @@ export default function LeaderboardPage() {
                         <TabsTrigger value="premium" className="px-5 h-10 data-[state=active]:bg-amber-500 data-[state=active]:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-white/40 hover:text-white">
                             <Crown className="h-3.5 w-3.5 mr-1.5" /> Premium
                         </TabsTrigger>
+                        <TabsTrigger value="all_time" className="px-5 h-10 data-[state=active]:bg-cyan-500 data-[state=active]:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-white/40 hover:text-white">
+                            <Zap className="h-3.5 w-3.5 mr-1.5" /> TÃ¼m Zamanlar
+                        </TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
 
             {/* Season Info Banner */}
-            {metadata?.is_all_zero_top && (
+            {mode !== 'all_time' && metadata?.is_all_zero_top && (
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
                     <Zap className="h-5 w-5 text-indigo-400 animate-pulse" />
                     <div>
-                        <p className="text-sm font-bold text-white">Sezon Yeni Başladı! 🚀</p>
-                        <p className="text-xs text-white/50">Sıralama ilk XP kazanımlarıyla birlikte netleşecektir. Şimdi çalışmaya başla ve zirveye yerleş!</p>
+                        <p className="text-sm font-bold text-white">Sezon Yeni BaÅŸladÄ±! ğŸš€</p>
+                        <p className="text-xs text-white/50">SÄ±ralama ilk XP kazanÄ±mlarÄ±yla birlikte netleÅŸecektir. Åimdi Ã§alÄ±ÅŸmaya baÅŸla ve zirveye yerleÅŸ!</p>
                     </div>
                 </div>
-            )}
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
+            )}            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase tracking-widest px-2">
                     <TrendingUp className="h-3 w-3" />
-                    Bu sıralama Sezon XP değerlerine göre hesaplanır
+                    {mode === 'all_time'
+                        ? "Bu sıralama Toplam XP değerlerine göre hesaplanır"
+                        : "Bu sıralama Sezon XP değerlerine göre hesaplanır"}
                 </div>
                 <div className="hidden md:flex items-center gap-1.5 text-[10px] text-white/20 font-medium">
                     <ShieldCheck className="h-3 w-3" />
-                    Eşitlik durumunda: Sezon XP (Azalan) → Kullanıcı ID (Artan)
+                    {mode === 'all_time'
+                        ? "Eşitlik durumunda: Toplam XP (Azalan) -> Kullanıcı ID (Artan)"
+                        : "Eşitlik durumunda: Sezon XP (Azalan) -> Kullanıcı ID (Artan)"}
                 </div>
             </div>
 
             {/* League Filter Chips */}
-            {mode !== 'overall' && (
+            {(mode === 'league' || mode === 'premium') && (
                 <div className="flex flex-wrap gap-2">
                     {LEAGUES.map((l) => {
                         const config = LEAGUE_CONFIG[l] || LEAGUE_CONFIG.Bronze;
@@ -219,7 +225,7 @@ export default function LeaderboardPage() {
                 {[
                     { icon: Users, label: "Toplam Oyuncu", value: totalCount !== null ? totalCount.toLocaleString() : `${users.length}`, color: "text-indigo-400", bg: "bg-indigo-500/5", border: "border-indigo-500/15" },
                     { icon: Globe, label: "Ülke", value: `${new Set(users.map(u => u.country).filter(Boolean)).size}`, color: "text-emerald-400", bg: "bg-emerald-500/5", border: "border-emerald-500/15" },
-                    { icon: Zap, label: "En Yüksek Sezon XP", value: users[0]?.total_xp?.toLocaleString() || "—", color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/15" },
+                    { icon: Zap, label: mode === 'all_time' ? "En Yüksek Toplam XP" : "En Yüksek Sezon XP", value: users[0]?.total_xp?.toLocaleString() || "—", color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/15" },
                 ].map(({ icon: Icon, label, value, color, bg, border }) => (
                     <div key={label} className={`rounded-2xl border ${bg} ${border} p-4 flex items-center gap-3`}>
                         <div className={`h-9 w-9 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>
@@ -241,24 +247,24 @@ export default function LeaderboardPage() {
                         <div className="absolute inset-0 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
                         <div className="absolute inset-2 rounded-full border-2 border-violet-500/30 border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
                     </div>
-                    <p className="text-white/30 font-bold text-sm uppercase tracking-widest">Yükleniyor...</p>
+                    <p className="text-white/30 font-bold text-sm uppercase tracking-widest">YÃ¼kleniyor...</p>
                 </div>
             ) : users.length === 0 ? (
                 <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/10">
                     <Trophy className="mx-auto h-12 w-12 text-white/20 mb-4" />
-                    <h3 className="text-lg font-bold text-white mb-2">Bu ligde henüz kimse yok</h3>
-                    <p className="text-white/40 text-sm">Sezon yeni başladı veya bu ligde XP kazanan kullanıcı bulunmuyor.</p>
+                    <h3 className="text-lg font-bold text-white mb-2">Bu ligde henÃ¼z kimse yok</h3>
+                    <p className="text-white/40 text-sm">Sezon yeni baÅŸladÄ± veya bu ligde XP kazanan kullanÄ±cÄ± bulunmuyor.</p>
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {top3.length > 0 && <LeaderboardHero top3={top3} />}
-                    <LeaderboardTable users={tableUsers} currentUserId={currentUserId} />
+                    {top3.length > 0 && <LeaderboardHero top3={top3} scoreLabel={scoreLabel} />}
+                    <LeaderboardTable users={tableUsers} currentUserId={currentUserId} scoreLabel={scoreLabel} />
 
                     {/* Pagination Footer */}
                     {totalCount !== null && (
                         <div className="flex items-center justify-between px-2">
                             <p className="text-xs text-white/30 font-semibold">
-                                {users.length.toLocaleString()} / {totalCount.toLocaleString()} oyuncu gösteriliyor
+                                {users.length.toLocaleString()} / {totalCount.toLocaleString()} oyuncu gÃ¶steriliyor
                             </p>
                             {users.length < totalCount && (
                                 <button
@@ -266,11 +272,11 @@ export default function LeaderboardPage() {
                                     disabled={loading}
                                     className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all disabled:opacity-30"
                                 >
-                                    {loading ? 'Yükleniyor...' : 'Daha Fazla Göster'}
+                                    {loading ? 'YÃ¼kleniyor...' : 'Daha Fazla GÃ¶ster'}
                                 </button>
                             )}
                             {users.length >= totalCount && totalCount > PAGE_SIZE && (
-                                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">Tüm oyuncular yüklendi ✓</span>
+                                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">TÃ¼m oyuncular yÃ¼klendi âœ“</span>
                             )}
                         </div>
                     )}
@@ -286,8 +292,8 @@ export default function LeaderboardPage() {
                             <Target className="h-7 w-7" style={{ color: activeLeagueConfig.color }} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut Sıralaman</p>
-                            <p className="text-xl font-black text-white">#{myData.data.rank_in_league} — {myData.data.league}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut SÄ±ralaman</p>
+                            <p className="text-xl font-black text-white">#{myData.data.rank_in_league} â€” {myData.data.league}</p>
                             <div className="flex gap-4 mt-1">
                                 <p className="text-[10px] text-white/50 uppercase tracking-widest leading-none">
                                     <span className="text-white font-bold">{myData.data.season_xp?.toLocaleString()} XP</span> Sezon
@@ -325,13 +331,13 @@ export default function LeaderboardPage() {
                                         myData.distances.distance_to_relegate <= 0 ? "text-red-400" : "text-white/40"
                                 )}>Sezon Durumu</p>
                                 <p className="text-xl font-black text-white">
-                                    {myData.distances.distance_to_promote <= 0 ? "Yükselme Bölgesi 🚀" :
-                                        myData.distances.distance_to_relegate <= 0 ? "Düşme Tehlikesi ⚠️" : "Güvenli Bölge ✅"}
+                                    {myData.distances.distance_to_promote <= 0 ? "YÃ¼kselme BÃ¶lgesi ğŸš€" :
+                                        myData.distances.distance_to_relegate <= 0 ? "DÃ¼ÅŸme Tehlikesi âš ï¸" : "GÃ¼venli BÃ¶lge âœ…"}
                                 </p>
                                 <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">
                                     {myData.distances.distance_to_promote > 0
-                                        ? `${myData.distances.distance_to_promote} kişi önünde yükselebilirsin`
-                                        : "Sezonu böyle bitir!"}
+                                        ? `${myData.distances.distance_to_promote} kiÅŸi Ã¶nÃ¼nde yÃ¼kselebilirsin`
+                                        : "Sezonu bÃ¶yle bitir!"}
                                 </p>
                             </div>
                         </div>
@@ -355,9 +361,13 @@ function formatSnapshots(data: any[], scope: string): LeaderboardUser[] {
             avatar_url: profile.avatar_url ?? null,
             country: profile.country ?? null,
             current_level: profile.current_level ?? undefined,
-            total_xp: u.season_xp ?? 0,
+            total_xp: u.season_xp ?? u.total_xp ?? 0,
             tier: u.league || 'Bronze',
             rank,
         };
     });
 }
+
+
+
+
