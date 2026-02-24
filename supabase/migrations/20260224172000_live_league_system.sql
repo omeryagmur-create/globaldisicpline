@@ -33,7 +33,8 @@ SELECT
         ELSE NULL
     END as rank_premium_in_league,
     (SELECT id FROM active_season) as season_id
-FROM profiles p;
+FROM profiles p
+LEFT JOIN xp_totals x ON p.id = x.user_id;
 
 -- 3. Update settle_league_movements to be more robust for different user counts
 CREATE OR REPLACE FUNCTION settle_league_movements(p_season_id uuid)
