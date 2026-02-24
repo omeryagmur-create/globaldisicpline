@@ -8,11 +8,14 @@ describe('calculateFallbackRanks', () => {
         { id: '3', current_league: 'Silver', total_xp: 3000, subscription_tier: 'free' },
         { id: '4', current_league: 'Silver', total_xp: 2500, subscription_tier: 'free' },
         { id: '5', current_league: 'Gold', total_xp: 6000, subscription_tier: 'premium' },
+        { id: 'a-tie', current_league: 'Bronze', total_xp: 1000, subscription_tier: 'free' },
+        { id: 'b-tie', current_league: 'Bronze', total_xp: 1000, subscription_tier: 'free' },
     ];
 
-    it('ranks overall correctly', () => {
-        const result = calculateFallbackRanks(mockProfiles, 'overall', null, 0, 10);
-        expect(result).toHaveLength(5);
+    it('ranks overall correctly with deterministic tie breaking', () => {
+        const { data: result, total_count } = calculateFallbackRanks(mockProfiles, 'overall', null, 0, 10);
+        expect(total_count).toBe(7);
+        expect(result).toHaveLength(7);
 
         // Highest XP first
         expect(result[0].user_id).toBe('5'); // 6000 XP
@@ -21,12 +24,20 @@ describe('calculateFallbackRanks', () => {
         expect(result[1].user_id).toBe('3'); // 3000 XP
         expect(result[1].rank_overall).toBe(2);
 
+        // Handling ties sequentially by ID sorting (1, a-tie, b-tie)
         expect(result[4].user_id).toBe('1'); // 1000 XP
         expect(result[4].rank_overall).toBe(5);
+
+        expect(result[5].user_id).toBe('a-tie'); // 1000 XP
+        expect(result[5].rank_overall).toBe(6);
+
+        expect(result[6].user_id).toBe('b-tie'); // 1000 XP
+        expect(result[6].rank_overall).toBe(7);
     });
 
     it('filters and ranks by league correctly', () => {
-        const result = calculateFallbackRanks(mockProfiles, 'league', 'Silver', 0, 10);
+        const { data: result, total_count } = calculateFallbackRanks(mockProfiles, 'league', 'Silver', 0, 10);
+        expect(total_count).toBe(2);
         expect(result).toHaveLength(2);
 
         expect(result[0].user_id).toBe('3'); // 3000 XP, 1st in Silver
@@ -37,7 +48,8 @@ describe('calculateFallbackRanks', () => {
     });
 
     it('filters and ranks by premium correctly', () => {
-        const result = calculateFallbackRanks(mockProfiles, 'premium', null, 0, 10);
+        const { data: result, total_count } = calculateFallbackRanks(mockProfiles, 'premium', null, 0, 10);
+        expect(total_count).toBe(2);
         expect(result).toHaveLength(2); // Only users 2 & 5 are premium
 
         // Highest premium XP first (user 5)

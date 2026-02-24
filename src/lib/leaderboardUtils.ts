@@ -10,8 +10,12 @@ export interface FallbackProfile {
 }
 
 export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: string, leagueFilter: string | null, offset: number, limit: number) {
-    // Sort initially by total_xp DESC
-    const sortedProfiles = [...allProfiles].sort((a, b) => (b.total_xp || 0) - (a.total_xp || 0));
+    // Sort initially by total_xp DESC and id ASC for deterministic ranking
+    const sortedProfiles = [...allProfiles].sort((a, b) => {
+        const xpDiff = (b.total_xp || 0) - (a.total_xp || 0);
+        if (xpDiff !== 0) return xpDiff;
+        return a.id.localeCompare(b.id);
+    });
 
     const leagueCounters: Record<string, number> = {};
     const premiumLeagueCounters: Record<string, number> = {};
@@ -56,5 +60,8 @@ export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: st
         processedAll.sort((a, b) => (a.rank_overall || 0) - (b.rank_overall || 0));
     }
 
-    return processedAll.slice(offset, offset + limit);
+    return {
+        data: processedAll.slice(offset, offset + limit),
+        total_count: processedAll.length
+    };
 }

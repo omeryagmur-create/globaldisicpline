@@ -50,6 +50,9 @@ export default function LeaderboardPage() {
     const [myData, setMyData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [initialized, setInitialized] = useState(false);
+    const [totalCount, setTotalCount] = useState<number | null>(null);
+    const [offset, setOffset] = useState(0);
+    const PAGE_SIZE = 50;
 
     // Step 1: Get current user (fast, client-side)
     useEffect(() => {
@@ -80,34 +83,44 @@ export default function LeaderboardPage() {
             }
             if (board?.data) {
                 setUsers(formatSnapshots(board.data, 'overall'));
+                setTotalCount(board.metadata?.total_count ?? board.data.length);
             }
             setLoading(false);
         });
     }, [initialized]);
 
-    const loadLeaderboard = useCallback(async (scope: string, league: LeagueTier) => {
+    const loadLeaderboard = useCallback(async (scope: string, league: LeagueTier, newOffset = 0, append = false) => {
         setLoading(true);
-        let url = `/api/leaderboard?scope=${scope}&limit=50`;
+        let url = `/api/leaderboard?scope=${scope}&limit=${PAGE_SIZE}&offset=${newOffset}`;
         if (scope !== 'overall') url += `&league=${league}`;
 
         try {
             const res = await fetch(url);
+            if (!res.ok) {
+                console.error("Leaderboard API error", res.status);
+                setLoading(false);
+                return;
+            }
             const result = await res.json();
             if (result.data) {
-                setUsers(formatSnapshots(result.data, scope));
+                const formatted = formatSnapshots(result.data, scope);
+                setUsers(prev => append ? [...prev, ...formatted] : formatted);
+                setOffset(newOffset);
+                setTotalCount(result.metadata?.total_count ?? null);
             }
         } catch (err) {
             console.error("Failed to load leaderboard", err);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [PAGE_SIZE]);
 
     // Reload when mode or league changes (but not on first run — already loaded in parallel)
     const [firstRun, setFirstRun] = useState(true);
     useEffect(() => {
         if (firstRun) { setFirstRun(false); return; }
-        loadLeaderboard(mode, selectedLeague);
+        setOffset(0);
+        loadLeaderboard(mode, selectedLeague, 0, false);
     }, [mode, selectedLeague, loadLeaderboard, firstRun]);
 
     const top3 = users.slice(0, 3);
@@ -179,7 +192,7 @@ export default function LeaderboardPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3">
                 {[
-                    { icon: Users, label: "Toplam Oyuncu", value: `${users.length}`, color: "text-indigo-400", bg: "bg-indigo-500/5", border: "border-indigo-500/15" },
+                    { icon: Users, label: "Toplam Oyuncu", value: totalCount !== null ? totalCount.toLocaleString() : `${users.length}`, color: "text-indigo-400", bg: "bg-indigo-500/5", border: "border-indigo-500/15" },
                     { icon: Globe, label: "Ülke", value: `${new Set(users.map(u => u.country).filter(Boolean)).size}`, color: "text-emerald-400", bg: "bg-emerald-500/5", border: "border-emerald-500/15" },
                     { icon: Zap, label: "En Yüksek XP", value: users[0]?.total_xp?.toLocaleString() || "—", color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/15" },
                 ].map(({ icon: Icon, label, value, color, bg, border }) => (
@@ -215,6 +228,27 @@ export default function LeaderboardPage() {
                 <div className="space-y-6">
                     {top3.length > 0 && <LeaderboardHero top3={top3} />}
                     <LeaderboardTable users={tableUsers} currentUserId={currentUserId} />
+
+                    {/* Pagination Footer */}
+                    {totalCount !== null && (
+                        <div className="flex items-center justify-between px-2">
+                            <p className="text-xs text-white/30 font-semibold">
+                                {users.length.toLocaleString()} / {totalCount.toLocaleString()} oyuncu gösteriliyor
+                            </p>
+                            {users.length < totalCount && (
+                                <button
+                                    onClick={() => loadLeaderboard(mode, selectedLeague, offset + PAGE_SIZE, true)}
+                                    disabled={loading}
+                                    className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all disabled:opacity-30"
+                                >
+                                    {loading ? 'Yükleniyor...' : 'Daha Fazla Göster'}
+                                </button>
+                            )}
+                            {users.length >= totalCount && totalCount > PAGE_SIZE && (
+                                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">Tüm oyuncular yüklendi ✓</span>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 

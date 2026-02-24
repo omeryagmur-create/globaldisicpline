@@ -304,9 +304,9 @@ export interface Database {
             }
 
             league_seasons: {
-                Row: { id: string; name: string; starts_at: string; ends_at: string | null; status: string; created_at: string }
-                Insert: { id?: string; name: string; starts_at?: string; ends_at?: string | null; status?: string; created_at?: string }
-                Update: { id?: string; name?: string; starts_at?: string; ends_at?: string | null; status?: string; created_at?: string }
+                Row: { id: string; season_number: number; starts_at: string; ends_at: string; status: string; created_at: string }
+                Insert: { id?: string; season_number: number; starts_at: string; ends_at: string; status?: string; created_at?: string }
+                Update: { id?: string; season_number?: number; starts_at?: string; ends_at?: string; status?: string; created_at?: string }
             }
             league_snapshots: {
                 Row: { id: string; season_id: string; user_id: string; league: LeagueTierEnum; season_xp: number; rank_overall: number; rank_in_league: number; rank_premium_in_league: number | null; created_at: string }

@@ -16,7 +16,13 @@ BEGIN
     ELSE
         -- If it exists as text, we should alter its type to our enum
         IF (SELECT data_type FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'current_league') = 'text' THEN
-            ALTER TABLE public.profiles ALTER COLUMN current_league TYPE league_tier_enum USING current_league::league_tier_enum;
+            ALTER TABLE public.profiles ALTER COLUMN current_league TYPE league_tier_enum USING (
+                CASE 
+                    WHEN current_league IN ('Bronze', 'Silver', 'Gold', 'Platinum', 'Emerald', 'Diamond', 'Master', 'Grandmaster') THEN current_league::league_tier_enum
+                    WHEN current_league = 'Elite' THEN 'Master'::league_tier_enum
+                    ELSE 'Bronze'::league_tier_enum
+                END
+            );
         END IF;
     END IF;
 END $$;
@@ -24,8 +30,8 @@ END $$;
 -- 3. Backfill data based on the old tier column safely
 UPDATE public.profiles
 SET current_league = (CASE 
+    WHEN tier IN ('Bronze', 'Silver', 'Gold', 'Platinum', 'Emerald', 'Diamond', 'Master', 'Grandmaster') THEN tier
     WHEN tier = 'Elite' THEN 'Master'
-    WHEN tier IS NOT NULL AND tier != '' THEN tier
     ELSE 'Bronze'
 END)::league_tier_enum
 WHERE current_league IS NULL;

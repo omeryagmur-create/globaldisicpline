@@ -12,8 +12,8 @@ async function getFallbackLeaderboard(supabase: any, scope: string, leagueFilter
 
     if (error || !allProfiles) return { error: 'Failed to fetch leaderboard' };
 
-    const data = calculateFallbackRanks(allProfiles, scope, leagueFilter, offset, limit);
-    return { data, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true } };
+    const { data, total_count } = calculateFallbackRanks(allProfiles, scope, leagueFilter, offset, limit);
+    return { data, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true, total_count } };
 }
 
 export async function GET(request: Request) {
@@ -23,6 +23,11 @@ export async function GET(request: Request) {
         const leagueFilter = searchParams.get('league');
         const limit = parseInt(searchParams.get('limit') || '50', 10);
         const offset = parseInt(searchParams.get('offset') || '0', 10);
+
+        // Enforce league filter for specific scopes
+        if ((scope === 'league' || scope === 'premium') && !leagueFilter) {
+            return NextResponse.json({ error: 'League filter is required for league and premium scopes' }, { status: 400 });
+        }
 
         const supabase = await createClient();
 
@@ -47,7 +52,7 @@ export async function GET(request: Request) {
         // 2. Query the LIVE leaderboard view (always up to date)
         let snapshotQuery = supabase
             .from('live_league_leaderboard')
-            .select('user_id, season_xp, league, rank_overall, rank_in_league, rank_premium_in_league')
+            .select('user_id, season_xp, league, rank_overall, rank_in_league, rank_premium_in_league', { count: 'exact' })
             .eq('season_id', activeSeasonId);
 
         if (leagueFilter) {
@@ -67,7 +72,7 @@ export async function GET(request: Request) {
 
         snapshotQuery = snapshotQuery.range(offset, offset + limit - 1);
 
-        const { data: snapshots, error: snapError } = await snapshotQuery;
+        const { data: snapshots, count, error: snapError } = await snapshotQuery;
 
         if (snapError || !snapshots || snapshots.length === 0) {
             const fallback = await getFallbackLeaderboard(supabase, scope, leagueFilter, offset, limit, activeSeasonId);
@@ -98,7 +103,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             data,
-            metadata: { seasonId: activeSeasonId, scope, league: leagueFilter }
+            metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, total_count: count }
         });
 
     } catch (error: any) {
