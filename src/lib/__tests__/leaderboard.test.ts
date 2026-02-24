@@ -60,3 +60,32 @@ describe('calculateFallbackRanks', () => {
         expect(result[1].rank_premium_in_league).toBe(1); // 1st in Bronze premium
     });
 });
+
+import { checkIsAllZero } from '../leaderboardUtils';
+
+describe('checkIsAllZero', () => {
+    it('returns true if all top 20 users have 0 season XP', () => {
+        const data = Array(25)
+            .fill(0)
+            .map((_, i) => ({ id: `${i}`, season_xp: 0 }));
+        expect(checkIsAllZero(data)).toBe(true);
+    });
+
+    it('returns false if any of the top 20 users have season XP > 0', () => {
+        const data = Array(25)
+            .fill(0)
+            .map((_, i) => ({ id: `${i}`, season_xp: i === 5 ? 100 : 0 }));
+        expect(checkIsAllZero(data)).toBe(false);
+    });
+
+    it('returns false for empty data', () => {
+        expect(checkIsAllZero([])).toBe(false);
+    });
+
+    it('checks only the top 20', () => {
+        const data = Array(25)
+            .fill(0)
+            .map((_, i) => ({ id: `${i}`, season_xp: i === 22 ? 5000 : 0 }));
+        expect(checkIsAllZero(data)).toBe(true);
+    });
+});

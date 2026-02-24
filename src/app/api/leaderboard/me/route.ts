@@ -86,7 +86,10 @@ export async function GET(request: Request) {
         };
 
         return NextResponse.json({
-            data: snapshot,
+            data: {
+                ...snapshot,
+                total_xp: profile.total_xp
+            },
             distances
         });
 

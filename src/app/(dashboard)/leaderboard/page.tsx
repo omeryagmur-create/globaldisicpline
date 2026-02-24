@@ -51,6 +51,7 @@ export default function LeaderboardPage() {
     const [loading, setLoading] = useState(true);
     const [initialized, setInitialized] = useState(false);
     const [totalCount, setTotalCount] = useState<number | null>(null);
+    const [metadata, setMetadata] = useState<any>(null);
     const [offset, setOffset] = useState(0);
     const PAGE_SIZE = 50;
 
@@ -84,6 +85,7 @@ export default function LeaderboardPage() {
             if (board?.data) {
                 setUsers(formatSnapshots(board.data, 'overall'));
                 setTotalCount(board.metadata?.total_count ?? board.data.length);
+                setMetadata(board.metadata);
             }
             setLoading(false);
         });
@@ -107,6 +109,7 @@ export default function LeaderboardPage() {
                 setUsers(prev => append ? [...prev, ...formatted] : formatted);
                 setOffset(newOffset);
                 setTotalCount(result.metadata?.total_count ?? null);
+                setMetadata(result.metadata);
             }
         } catch (err) {
             console.error("Failed to load leaderboard", err);
@@ -161,6 +164,28 @@ export default function LeaderboardPage() {
                 </Tabs>
             </div>
 
+            {/* Season Info Banner */}
+            {metadata?.is_all_zero_top && (
+                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
+                    <Zap className="h-5 w-5 text-indigo-400 animate-pulse" />
+                    <div>
+                        <p className="text-sm font-bold text-white">Sezon Yeni Başladı! 🚀</p>
+                        <p className="text-xs text-white/50">Sıralama ilk XP kazanımlarıyla birlikte netleşecektir. Şimdi çalışmaya başla ve zirveye yerleş!</p>
+                    </div>
+                </div>
+            )}
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase tracking-widest px-2">
+                    <TrendingUp className="h-3 w-3" />
+                    Bu sıralama Sezon XP değerlerine göre hesaplanır
+                </div>
+                <div className="hidden md:flex items-center gap-1.5 text-[10px] text-white/20 font-medium">
+                    <ShieldCheck className="h-3 w-3" />
+                    Eşitlik durumunda: Sezon XP (Azalan) → Kullanıcı ID (Artan)
+                </div>
+            </div>
+
             {/* League Filter Chips */}
             {mode !== 'overall' && (
                 <div className="flex flex-wrap gap-2">
@@ -194,7 +219,7 @@ export default function LeaderboardPage() {
                 {[
                     { icon: Users, label: "Toplam Oyuncu", value: totalCount !== null ? totalCount.toLocaleString() : `${users.length}`, color: "text-indigo-400", bg: "bg-indigo-500/5", border: "border-indigo-500/15" },
                     { icon: Globe, label: "Ülke", value: `${new Set(users.map(u => u.country).filter(Boolean)).size}`, color: "text-emerald-400", bg: "bg-emerald-500/5", border: "border-emerald-500/15" },
-                    { icon: Zap, label: "En Yüksek XP", value: users[0]?.total_xp?.toLocaleString() || "—", color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/15" },
+                    { icon: Zap, label: "En Yüksek Sezon XP", value: users[0]?.total_xp?.toLocaleString() || "—", color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/15" },
                 ].map(({ icon: Icon, label, value, color, bg, border }) => (
                     <div key={label} className={`rounded-2xl border ${bg} ${border} p-4 flex items-center gap-3`}>
                         <div className={`h-9 w-9 rounded-xl ${bg} border ${border} flex items-center justify-center shrink-0`}>
@@ -263,7 +288,14 @@ export default function LeaderboardPage() {
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut Sıralaman</p>
                             <p className="text-xl font-black text-white">#{myData.data.rank_in_league} — {myData.data.league}</p>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">{myData.data.season_xp?.toLocaleString()} XP bu sezonda</p>
+                            <div className="flex gap-4 mt-1">
+                                <p className="text-[10px] text-white/50 uppercase tracking-widest leading-none">
+                                    <span className="text-white font-bold">{myData.data.season_xp?.toLocaleString()} XP</span> Sezon
+                                </p>
+                                <p className="text-[10px] text-white/30 uppercase tracking-widest leading-none">
+                                    <span className="text-white/60 font-bold">{myData.data.total_xp?.toLocaleString()} XP</span> Toplam
+                                </p>
+                            </div>
                         </div>
                     </div>
 

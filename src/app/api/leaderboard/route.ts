@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-import { calculateFallbackRanks } from '@/lib/leaderboardUtils';
+import { calculateFallbackRanks, checkIsAllZero } from '@/lib/leaderboardUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,21 @@ async function getFallbackLeaderboard(supabase: any, scope: string, leagueFilter
     if (error || !allProfiles) return { error: 'Failed to fetch leaderboard' };
 
     const { data, total_count } = calculateFallbackRanks(allProfiles, scope, leagueFilter, offset, limit);
-    return { data, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true, total_count } };
+
+    // Check if top results (first 20) are all 0 XP
+    const isAllZero = checkIsAllZero(data);
+
+    return {
+        data,
+        metadata: {
+            seasonId: activeSeasonId,
+            scope,
+            league: leagueFilter,
+            fallback: true,
+            total_count,
+            is_all_zero_top: isAllZero
+        }
+    };
 }
 
 export async function GET(request: Request) {
@@ -34,7 +48,7 @@ export async function GET(request: Request) {
         // 1. Get active season ID - fast indexed query
         const { data: activeSeason, error: seasonError } = await supabase
             .from('league_seasons')
-            .select('id')
+            .select('id, starts_at, ends_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(1)
@@ -101,9 +115,20 @@ export async function GET(request: Request) {
             }
         }));
 
+        // Check if top results (first 20) are all 0 XP
+        const isAllZero = checkIsAllZero(snapshots);
+
         return NextResponse.json({
             data,
-            metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, total_count: count }
+            metadata: {
+                seasonId: activeSeasonId,
+                scope,
+                league: leagueFilter,
+                total_count: count,
+                season_starts_at: activeSeason.starts_at,
+                season_ends_at: activeSeason.ends_at,
+                is_all_zero_top: isAllZero
+            }
         });
 
     } catch (error: any) {

@@ -65,3 +65,8 @@ export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: st
         total_count: processedAll.length
     };
 }
+
+export function checkIsAllZero(data: { season_xp?: number }[]): boolean {
+    if (!data || data.length === 0) return false;
+    return data.slice(0, 20).every(u => (u.season_xp || 0) === 0);
+}
