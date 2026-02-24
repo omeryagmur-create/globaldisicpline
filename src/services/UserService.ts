@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
-import { Profile, Restriction } from '@/types/user';
+import { Profile } from '@/types/user';
+import { ActiveRestriction } from '@/lib/constants/restrictions';
 
 export class UserService {
     static async getProfile(): Promise<Profile | null> {
@@ -61,7 +62,7 @@ export class UserService {
         await supabase.auth.signOut();
     }
 
-    static async getActiveRestrictions(): Promise<Restriction[]> {
+    static async getActiveRestrictions(): Promise<ActiveRestriction[]> {
         try {
             const response = await fetch('/api/restrictions/active');
             if (response.ok) {

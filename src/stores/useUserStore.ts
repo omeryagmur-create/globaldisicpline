@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Profile, Restriction } from '@/types/user';
+import { Profile } from '@/types/user';
 import { realtimeManager } from '@/lib/events/RealtimeManager';
 import { calculateLeague, LeagueTier } from '@/lib/leagues';
 import { UserService } from '@/services/UserService';
+import { ActiveRestriction } from '@/lib/constants/restrictions';
 
 interface UserState {
     profile: Profile | null;
     loading: boolean;
-    activeRestrictions: Restriction[];
+    activeRestrictions: ActiveRestriction[];
     league: LeagueTier;
 
     setProfile: (profile: Profile | null) => void;
@@ -120,9 +121,9 @@ export const useUserStore = create<UserState>()(
             isRestricted: (feature) => {
                 const { activeRestrictions } = get();
                 return activeRestrictions.some(r => {
-                    return r.features?.includes(feature) ||
-                        r.features?.includes('all_premium_features') ||
-                        r.features?.includes('social_features_disabled');
+                    return r.features.includes(feature) ||
+                        r.features.includes('all_premium_features') ||
+                        r.features.includes('social_features_disabled');
                 });
             },
         }),

@@ -2,40 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { X, ShieldAlert } from "lucide-react";
-import { ActiveRestriction } from "@/lib/constants/restrictions";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/useUserStore";
 
 export function RestrictionBanner() {
-    const [restrictions, setRestrictions] = useState<ActiveRestriction[]>([]);
     const [visible, setVisible] = useState(true);
+    const { activeRestrictions, checkRestrictions } = useUserStore();
 
     useEffect(() => {
-        const fetchRestrictions = async () => {
-            try {
-                const response = await fetch('/api/restrictions/active');
-                if (response.ok) {
-                    const data = await response.json();
-                    setRestrictions(data.restrictions || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch restrictions:", error);
-            }
-        };
-
-        fetchRestrictions();
+        if (activeRestrictions.length === 0) {
+            checkRestrictions();
+        }
 
         // Listen for custom event 'restrictionUpdated' for demo purposes
-        const handleUpdate = () => fetchRestrictions();
+        const handleUpdate = () => checkRestrictions();
         window.addEventListener('restrictionUpdated', handleUpdate);
 
         return () => window.removeEventListener('restrictionUpdated', handleUpdate);
-    }, []);
+    }, [activeRestrictions.length, checkRestrictions]);
 
-    if (restrictions.length === 0 || !visible) return null;
+    if (activeRestrictions.length === 0 || !visible) return null;
 
     // Display the most severe restriction or the first one
-    const active = restrictions[0];
+    const active = activeRestrictions[0];
 
     return (
         <div className="bg-destructive/10 border-b border-destructive/20 p-4 animate-in slide-in-from-top duration-300">

@@ -18,31 +18,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Profile } from "@/types/user";
+import { useEffect } from "react";
+import { useUserStore } from "@/stores/useUserStore";
 
 export function Navbar() {
     const { setTheme, theme } = useTheme();
     const { t } = useLanguage();
     const router = useRouter();
     const supabase = createClient();
-    const [profile, setProfile] = useState<Profile | null>(null);
+    const { profile, fetchProfile } = useUserStore();
 
     useEffect(() => {
-        async function getProfile() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .single();
-                setProfile(data);
-            }
+        if (!profile) {
+            fetchProfile();
         }
-        getProfile();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [profile, fetchProfile]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();

@@ -14,14 +14,26 @@ async function getPlannerData() {
 
     if (!user) return { plan: null, tasks: [] };
 
-    const plans = await PlannerService.getStudyPlans(supabase, user.id);
-    const plan = plans.find((p) => p.is_active);
+    // Fetch active plan with its tasks in one go using Supabase relationship join
+    const { data: plan, error } = await supabase
+        .from('study_plans')
+        .select(`
+            *,
+            daily_tasks:daily_tasks(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('task_date', { referencedTable: 'daily_tasks', ascending: true })
+        .single();
 
-    if (!plan) return { plan: null, tasks: [] };
+    if (error || !plan) {
+        return { plan: null, tasks: [] };
+    }
 
-    const tasks = await PlannerService.getTasksByPlan(supabase, plan.id);
+    // Cast because Supabase types might not know about the join automatically here
+    const tasks = (plan as any).daily_tasks || [];
 
-    return { plan, tasks: tasks || [] };
+    return { plan, tasks };
 }
 
 export default async function PlannerPage() {

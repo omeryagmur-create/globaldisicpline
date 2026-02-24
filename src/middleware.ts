@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
+import type { CookieOptions } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-    // Update session first
-    const response = await updateSession(request)
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    })
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +16,40 @@ export async function middleware(request: NextRequest) {
             cookies: {
                 get(name: string) {
                     return request.cookies.get(name)?.value
+                },
+                set(name: string, value: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    })
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    response.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    })
+                },
+                remove(name: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    })
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    })
+                    response.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    })
                 },
             },
         }
@@ -87,6 +124,21 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/dashboard/:path*',
+        '/focus/:path*',
+        '/leaderboard/:path*',
+        '/planner/:path*',
+        '/mock-analysis/:path*',
+        '/community/:path*',
+        '/profile/:path*',
+        '/premium/:path*',
+        '/rewards/:path*',
+        '/notifications/:path*',
+        '/groups/:path*',
+        '/self-development/:path*',
+        '/system-control/:path*',
+        '/login',
+        '/signup',
+        '/reset-password',
     ],
 }
