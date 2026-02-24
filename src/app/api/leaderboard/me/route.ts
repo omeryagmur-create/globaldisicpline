@@ -15,7 +15,7 @@ export async function GET(request: Request) {
         // 1. Get user profile first (always exists)
         const { data: profile } = await supabase
             .from('profiles')
-            .select('id, current_league, total_xp, full_name, subscription_tier')
+            .select('id, current_league, total_xp, current_season_xp, full_name, subscription_tier')
             .eq('id', user.id)
             .single();
 
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
                     rank_overall: 0,
                     rank_in_league: 0,
                     rank_premium_in_league: null,
-                    season_xp: profile.total_xp,
+                    season_xp: profile.current_season_xp || 0,
                     league: profile.current_league || 'Bronze'
                 },
                 distances: null,
@@ -85,17 +85,26 @@ export async function GET(request: Request) {
             distance_to_relegate: Math.max(0, (total - relegateCount) - snapshot.rank_in_league)
         };
 
-        // 6. Get all-time rank
-        const { count: rankAllTime } = await supabase
+        // 6. Get all-time rank with deterministic tie-break (XP DESC, ID ASC)
+        // Rank = (count of users with more XP) + (count of users with same XP but smaller ID) + 1
+        const { count: higherXPCount } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .gt('total_xp', profile.total_xp);
+
+        const { count: sameXPSmallerIdCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('total_xp', profile.total_xp)
+            .lt('id', profile.id);
+
+        const rankAllTime = (higherXPCount || 0) + (sameXPSmallerIdCount || 0) + 1;
 
         return NextResponse.json({
             data: {
                 ...snapshot,
                 total_xp: profile.total_xp,
-                rank_all_time: (rankAllTime || 0) + 1
+                rank_all_time: rankAllTime
             },
             distances
         });

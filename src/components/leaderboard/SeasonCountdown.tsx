@@ -30,8 +30,8 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
                 <Zap className="h-5 w-5 text-amber-400" />
                 <div>
-                    <p className="text-sm font-bold text-white uppercase tracking-wider">Sezon Hazırlanıyor</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Sıralamalar yakında aktifleşecek</p>
+                    <p className="text-sm font-bold text-white uppercase tracking-wider">Sezon Haz\u0131rlan\u0131yor</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">S\u0131ralamalar yak\u0131nda aktiflek\u015fecek</p>
                 </div>
             </div>
         );
@@ -42,8 +42,8 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
             <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3">
                 <Timer className="h-5 w-5 text-indigo-400 animate-pulse" />
                 <div>
-                    <p className="text-sm font-bold text-white uppercase tracking-wider">Sezon Kapanıyor</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Sonuçlar hesaplanıyor...</p>
+                    <p className="text-sm font-bold text-white uppercase tracking-wider">Sezon Kapan\u0131yor</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Sonu\u00e7lar hesaplan\u0131yor...</p>
                 </div>
             </div>
         );
@@ -61,11 +61,11 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
                     <Timer className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 leading-none mb-1.5">Sezon Bitişine Kalan</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 leading-none mb-1.5">Sezon Biti\u015fine Kalan</p>
                     <div className="flex items-center gap-2">
                         <div className="flex items-baseline gap-1">
                             <span className="text-xl font-black text-white tabular-nums">{days}</span>
-                            <span className="text-[10px] font-bold text-white/20 uppercase">Gün</span>
+                            <span className="text-[10px] font-bold text-white/20 uppercase">G\u00fcn</span>
                         </div>
                         <div className="h-4 w-px bg-white/10" />
                         <div className="flex items-baseline gap-1">
@@ -87,7 +87,7 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
             </div>
 
             <div className="hidden sm:block text-right">
-                <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-1">Bitiş Tarihi</p>
+                <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-1">Biti\u015f Tarihi</p>
                 <p className="text-xs font-black text-white/60">
                     {new Date(seasonEndsAt).toLocaleDateString("tr-TR", { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>

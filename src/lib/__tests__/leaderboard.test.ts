@@ -3,13 +3,13 @@ import { calculateFallbackRanks } from '../leaderboardUtils';
 
 describe('calculateFallbackRanks', () => {
     const mockProfiles = [
-        { id: '1', current_league: 'Bronze', total_xp: 1000, subscription_tier: 'free' },
-        { id: '2', current_league: 'Bronze', total_xp: 1500, subscription_tier: 'pro' },
-        { id: '3', current_league: 'Silver', total_xp: 3000, subscription_tier: 'free' },
-        { id: '4', current_league: 'Silver', total_xp: 2500, subscription_tier: 'free' },
-        { id: '5', current_league: 'Gold', total_xp: 6000, subscription_tier: 'premium' },
-        { id: 'a-tie', current_league: 'Bronze', total_xp: 1000, subscription_tier: 'free' },
-        { id: 'b-tie', current_league: 'Bronze', total_xp: 1000, subscription_tier: 'free' },
+        { id: '1', current_league: 'Bronze', total_xp: 1000, current_season_xp: 1000, subscription_tier: 'free' },
+        { id: '2', current_league: 'Bronze', total_xp: 1500, current_season_xp: 1500, subscription_tier: 'pro' },
+        { id: '3', current_league: 'Silver', total_xp: 3000, current_season_xp: 3000, subscription_tier: 'free' },
+        { id: '4', current_league: 'Silver', total_xp: 2500, current_season_xp: 2500, subscription_tier: 'free' },
+        { id: '5', current_league: 'Gold', total_xp: 6000, current_season_xp: 6000, subscription_tier: 'premium' },
+        { id: 'a-tie', current_league: 'Bronze', total_xp: 1000, current_season_xp: 1000, subscription_tier: 'free' },
+        { id: 'b-tie', current_league: 'Bronze', total_xp: 1000, current_season_xp: 1000, subscription_tier: 'free' },
     ];
 
     it('ranks overall correctly with deterministic tie breaking', () => {

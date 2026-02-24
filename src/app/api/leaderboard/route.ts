@@ -56,7 +56,7 @@ async function getAllTimeLeaderboard(supabase: any, leagueFilter: string | null,
 async function getFallbackLeaderboard(supabase: any, scope: string, leagueFilter: string | null, offset: number, limit: number, activeSeasonId: string | null) {
     const { data: allProfiles, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier');
+        .select('id, full_name, avatar_url, country, total_xp, current_season_xp, current_league, subscription_tier, current_level');
 
     if (error || !allProfiles) return { error: 'Failed to fetch leaderboard' };
 
@@ -74,7 +74,7 @@ async function getFallbackLeaderboard(supabase: any, scope: string, leagueFilter
             fallback: true,
             total_count,
             is_all_zero_top: isAllZero,
-            xp_basis: 'total_xp',
+            xp_basis: scope === 'all_time' ? 'total_xp' : 'season_xp',
         }
     };
 }

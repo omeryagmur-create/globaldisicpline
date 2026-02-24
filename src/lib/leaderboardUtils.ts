@@ -3,6 +3,7 @@ export interface FallbackProfile {
     current_league?: string | null;
     subscription_tier?: string;
     total_xp?: number;
+    current_season_xp?: number;
     full_name?: string | null;
     avatar_url?: string | null;
     country?: string | null;
@@ -10,9 +11,14 @@ export interface FallbackProfile {
 }
 
 export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: string, leagueFilter: string | null, offset: number, limit: number) {
-    // Sort initially by total_xp DESC and id ASC for deterministic ranking
+    const isAllTime = scope === 'all_time';
+
+    // Sort by correct XP basis (season or total) and id ASC for deterministic ranking
     const sortedProfiles = [...allProfiles].sort((a, b) => {
-        const xpDiff = (b.total_xp || 0) - (a.total_xp || 0);
+        const valA = isAllTime ? (a.total_xp || 0) : (a.current_season_xp || 0);
+        const valB = isAllTime ? (b.total_xp || 0) : (b.current_season_xp || 0);
+
+        const xpDiff = valB - valA;
         if (xpDiff !== 0) return xpDiff;
         return a.id.localeCompare(b.id);
     });
@@ -23,6 +29,7 @@ export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: st
     let processedAll = sortedProfiles.map((p, index) => {
         const league = p.current_league || 'Bronze';
         const isPremium = p.subscription_tier !== 'free';
+        const xp = isAllTime ? (p.total_xp || 0) : (p.current_season_xp || 0);
 
         leagueCounters[league] = (leagueCounters[league] || 0) + 1;
         if (isPremium) {
@@ -31,7 +38,7 @@ export function calculateFallbackRanks(allProfiles: FallbackProfile[], scope: st
 
         return {
             user_id: p.id,
-            season_xp: p.total_xp,
+            season_xp: xp,
             league: league,
             rank_overall: index + 1,
             rank_in_league: leagueCounters[league],
