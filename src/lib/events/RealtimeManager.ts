@@ -2,21 +2,30 @@ import { createClient } from '../supabase/client';
 import { RealtimeEvent, EventBus } from '@/types/events';
 
 class RealtimeManager implements EventBus {
-    private supabase = createClient();
-    private channel = this.supabase.channel('gde-realtime-events');
+    private _channel: ReturnType<ReturnType<typeof createClient>['channel']> | null = null;
     private subscribers: ((event: RealtimeEvent) => void)[] = [];
 
-    constructor() {
-        this.channel
-            .on(
-                'broadcast',
-                { event: 'app-event' },
-                (payload) => {
-                    const event = payload.payload as RealtimeEvent;
-                    this.subscribers.forEach(sub => sub(event));
-                }
-            )
-            .subscribe();
+    private get channel() {
+        if (!this._channel) {
+            try {
+                const supabase = createClient();
+                this._channel = supabase.channel('gde-realtime-events');
+                this._channel
+                    .on(
+                        'broadcast',
+                        { event: 'app-event' },
+                        (payload) => {
+                            const event = payload.payload as RealtimeEvent;
+                            this.subscribers.forEach(sub => sub(event));
+                        }
+                    )
+                    .subscribe();
+            } catch {
+                // In test environments, channel may not be available
+                return null as any;
+            }
+        }
+        return this._channel;
     }
 
     async publish(event: RealtimeEvent) {
@@ -24,11 +33,15 @@ class RealtimeManager implements EventBus {
         this.subscribers.forEach(sub => sub(event));
 
         // Global broadcast for other clients
-        await this.channel.send({
-            type: 'broadcast',
-            event: 'app-event',
-            payload: event
-        });
+        try {
+            await this.channel?.send({
+                type: 'broadcast',
+                event: 'app-event',
+                payload: event
+            });
+        } catch {
+            // Silently fail in environments without realtime
+        }
     }
 
     subscribe(callback: (event: RealtimeEvent) => void) {
@@ -40,3 +53,4 @@ class RealtimeManager implements EventBus {
 }
 
 export const realtimeManager = new RealtimeManager();
+
