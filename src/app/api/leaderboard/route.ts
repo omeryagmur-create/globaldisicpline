@@ -8,79 +8,130 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const scope = searchParams.get('scope') || 'overall'; // 'overall', 'league', 'premium'
         const leagueFilter = searchParams.get('league');
-        const seasonId = searchParams.get('season');
         const limit = parseInt(searchParams.get('limit') || '50', 10);
         const offset = parseInt(searchParams.get('offset') || '0', 10);
 
         const supabase = await createClient();
 
-        let activeSeasonId = seasonId;
-        if (!activeSeasonId) {
-            const { data: activeSeason, error: seasonError } = await supabase
-                .rpc('get_active_season');
+        // 1. Get active season ID - fast indexed query
+        const { data: activeSeason, error: seasonError } = await supabase
+            .from('league_seasons')
+            .select('id')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
 
-            if (seasonError || !activeSeason || activeSeason.length === 0) {
-                return NextResponse.json({ error: 'No active season found' }, { status: 404 });
+        // If no active season, fall back to profiles table for basic ranking
+        if (seasonError || !activeSeason) {
+            const profileQuery = supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')
+                .order('total_xp', { ascending: false })
+                .range(offset, offset + limit - 1);
+
+            if (leagueFilter) {
+                profileQuery.eq('current_league', leagueFilter);
             }
-            activeSeasonId = activeSeason[0].id;
+
+            const { data: profiles, error: profileError } = await profileQuery;
+
+            if (profileError) {
+                return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
+            }
+
+            // Convert to snapshot-like format
+            const formatted = (profiles || []).map((p, i) => ({
+                user_id: p.id,
+                season_xp: p.total_xp,
+                league: p.current_league || 'Bronze',
+                rank_overall: offset + i + 1,
+                rank_in_league: offset + i + 1,
+                rank_premium_in_league: p.subscription_tier !== 'free' ? offset + i + 1 : null,
+                profiles: {
+                    id: p.id,
+                    full_name: p.full_name,
+                    avatar_url: p.avatar_url,
+                    country: p.country,
+                    current_level: p.current_level,
+                    subscription_tier: p.subscription_tier,
+                }
+            }));
+
+            return NextResponse.json({ data: formatted, metadata: { scope, league: leagueFilter, fallback: true } });
         }
 
-        let query = supabase
+        const activeSeasonId = activeSeason.id;
+
+        // 2. Query snapshots with a manual join via two queries (more reliable than Supabase FK join)
+        let snapshotQuery = supabase
             .from('league_snapshots')
-            .select(`
-        rank_overall,
-        rank_in_league,
-        rank_premium_in_league,
-        season_xp,
-        league,
-        user_id,
-        profiles (
-          id,
-          full_name,
-          avatar_url,
-          country,
-          subscription_tier,
-          current_level
-        )
-      `)
+            .select('user_id, season_xp, league, rank_overall, rank_in_league, rank_premium_in_league')
             .eq('season_id', activeSeasonId);
 
-        // Filter by league if provided
         if (leagueFilter) {
-            query = query.eq('league', leagueFilter);
+            snapshotQuery = snapshotQuery.eq('league', leagueFilter);
         }
 
-        // Sort and filter based on scope
         switch (scope) {
             case 'league':
-                query = query.not('rank_in_league', 'is', null).order('rank_in_league', { ascending: true });
+                snapshotQuery = snapshotQuery.not('rank_in_league', 'is', null).order('rank_in_league');
                 break;
             case 'premium':
-                query = query.not('rank_premium_in_league', 'is', null).order('rank_premium_in_league', { ascending: true });
+                snapshotQuery = snapshotQuery.not('rank_premium_in_league', 'is', null).order('rank_premium_in_league');
                 break;
-            case 'overall':
             default:
-                query = query.not('rank_overall', 'is', null).order('rank_overall', { ascending: true });
-                break;
+                snapshotQuery = snapshotQuery.not('rank_overall', 'is', null).order('rank_overall');
         }
 
-        // Pagination
-        query = query.range(offset, offset + limit - 1);
+        snapshotQuery = snapshotQuery.range(offset, offset + limit - 1);
 
-        const { data, error, count } = await query;
+        const { data: snapshots, error: snapError } = await snapshotQuery;
 
-        if (error) {
-            console.error('Error fetching leaderboard:', error);
-            return NextResponse.json({ error: 'Failed to fetch leaderboard data' }, { status: 500 });
+        if (snapError || !snapshots || snapshots.length === 0) {
+            // Fallback to profiles if no snapshots
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')
+                .order('total_xp', { ascending: false })
+                .range(offset, offset + limit - 1);
+
+            const formatted = (profiles || []).map((p, i) => ({
+                user_id: p.id,
+                season_xp: p.total_xp,
+                league: p.current_league || 'Bronze',
+                rank_overall: offset + i + 1,
+                rank_in_league: offset + i + 1,
+                rank_premium_in_league: p.subscription_tier !== 'free' ? offset + i + 1 : null,
+                profiles: { id: p.id, full_name: p.full_name, avatar_url: p.avatar_url, country: p.country, current_level: p.current_level, subscription_tier: p.subscription_tier }
+            }));
+            return NextResponse.json({ data: formatted, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true } });
         }
+
+        // 3. Fetch profiles for these user IDs
+        const userIds = snapshots.map(s => s.user_id);
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, country, current_level, subscription_tier')
+            .in('id', userIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+        const data = snapshots.map(snap => ({
+            ...snap,
+            profiles: profileMap.get(snap.user_id) || {
+                id: snap.user_id,
+                full_name: null,
+                avatar_url: null,
+                country: null,
+                current_level: 1,
+                subscription_tier: 'free',
+            }
+        }));
 
         return NextResponse.json({
             data,
-            metadata: {
-                seasonId: activeSeasonId,
-                scope,
-                league: leagueFilter,
-            }
+            metadata: { seasonId: activeSeasonId, scope, league: leagueFilter }
         });
 
     } catch (error: any) {
