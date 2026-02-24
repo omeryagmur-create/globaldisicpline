@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Profile } from '@/types/user';
 import { realtimeManager } from '@/lib/events/RealtimeManager';
-import { calculateLeague, LeagueTier } from '@/lib/leagues';
+import { LeagueTier } from '@/lib/leagues';
 import { UserService } from '@/services/UserService';
 import { ActiveRestriction } from '@/lib/constants/restrictions';
 
@@ -31,8 +31,7 @@ export const useUserStore = create<UserState>()(
 
             setProfile: (profile) => {
                 if (profile) {
-                    const consistency = profile.current_streak / 30; // 30 day normalization
-                    const league = calculateLeague(profile.total_xp, consistency);
+                    const league = (profile.current_league || 'Bronze') as LeagueTier;
                     set({ profile, league });
                 } else {
                     set({ profile: null, league: 'Bronze' });
@@ -49,8 +48,7 @@ export const useUserStore = create<UserState>()(
                         return;
                     }
 
-                    const consistency = profile.current_streak / 30;
-                    const league = calculateLeague(profile.total_xp, consistency);
+                    const league = (profile.current_league || 'Bronze') as LeagueTier;
 
                     set({ profile, league });
                     await get().checkRestrictions();
@@ -73,8 +71,7 @@ export const useUserStore = create<UserState>()(
                 }
 
                 const newProfile = { ...profile, ...updates };
-                const consistency = newProfile.current_streak / 30;
-                const newLeague = calculateLeague(newProfile.total_xp, consistency);
+                const newLeague = (newProfile.current_league || 'Bronze') as LeagueTier;
 
                 if (newLeague !== get().league) {
                     realtimeManager.publish({

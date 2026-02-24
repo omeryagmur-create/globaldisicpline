@@ -23,7 +23,8 @@ export interface Database {
                     current_streak: number
                     longest_streak: number
                     last_activity_date: string | null
-                    tier: string
+                    current_league: string | null
+                    tier: string /* @deprecated use current_league instead */
                     subscription_tier: string
                     is_admin: boolean
                     experiments: Json | null
@@ -43,7 +44,8 @@ export interface Database {
                     current_streak?: number
                     longest_streak?: number
                     last_activity_date?: string | null
-                    tier?: string
+                    current_league?: string | null
+                    tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
                     experiments?: Json | null
@@ -63,7 +65,8 @@ export interface Database {
                     current_streak?: number
                     longest_streak?: number
                     last_activity_date?: string | null
-                    tier?: string
+                    current_league?: string | null
+                    tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
                     experiments?: Json | null
@@ -299,6 +302,8 @@ export interface Database {
         }
     }
 }
+
+export type LeagueTierEnum = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Emerald' | 'Diamond' | 'Master' | 'Grandmaster'
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type FocusSession = Database['public']['Tables']['focus_sessions']['Row']

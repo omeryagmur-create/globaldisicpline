@@ -56,7 +56,7 @@ export const LeaderboardHero = ({
                                     {winner?.full_name || t.common.profile}
                                 </h2>
                                 <p className="text-white/40 font-black uppercase tracking-widest text-xs">
-                                    {t.common.level} {winner?.current_level} • {winner?.tier} Elite
+                                    {t.common.level} {winner?.current_level} • {winner?.tier}
                                 </p>
                             </div>
                         </div>

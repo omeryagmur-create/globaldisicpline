@@ -73,8 +73,11 @@ export function LeaderboardTable({ users, currentUserId, prestigeMode }: Leaderb
             'Bronze': t.leagues.bronzeTitle,
             'Silver': t.leagues.silverTitle,
             'Gold': t.leagues.goldTitle,
+            'Platinum': t.leagues.platinumTitle,
+            'Emerald': t.leagues.emeraldTitle,
             'Diamond': t.leagues.diamondTitle,
-            'Elite': t.leagues.eliteTitle,
+            'Master': t.leagues.masterTitle,
+            'Grandmaster': t.leagues.grandmasterTitle,
         };
         return mapping[tier] || t.leagues.bronzeTitle;
     };

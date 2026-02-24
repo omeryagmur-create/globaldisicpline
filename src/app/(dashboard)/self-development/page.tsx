@@ -119,7 +119,7 @@ export default function SelfDevPage() {
                                                 </div>
                                                 <div className="bg-background/80 p-3 rounded-lg border border-border/50 text-center">
                                                     <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">League</div>
-                                                    <div className="text-lg font-black text-orange-500">{league[0]}</div>
+                                                    <div className="text-lg font-black text-orange-500">{league}</div>
                                                 </div>
                                             </div>
                                         </CardContent>

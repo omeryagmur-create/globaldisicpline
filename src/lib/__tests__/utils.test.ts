@@ -11,15 +11,19 @@ describe('calculateLeague', () => {
     });
 
     it('returns Gold with enough XP and consistency', () => {
-        expect(calculateLeague(5500, 0.75)).toBe('Gold');
+        expect(calculateLeague(6000, 0.65)).toBe('Gold');
     });
 
     it('requires both high XP and high consistency for Diamond', () => {
-        expect(calculateLeague(16000, 0.85)).toBe('Diamond');
-        expect(calculateLeague(16000, 0.5)).not.toBe('Diamond');
+        expect(calculateLeague(45000, 0.85)).toBe('Diamond');
+        expect(calculateLeague(45000, 0.5)).not.toBe('Diamond');
     });
 
-    it('returns Elite for top tier stats', () => {
-        expect(calculateLeague(55000, 0.95)).toBe('Elite');
+    it('returns Master for high tier stats', () => {
+        expect(calculateLeague(80000, 0.92)).toBe('Master');
+    });
+
+    it('returns Grandmaster for top tier stats', () => {
+        expect(calculateLeague(160000, 0.96)).toBe('Grandmaster');
     });
 });

@@ -33,6 +33,9 @@ export async function GET(request: Request) {
             if (leagueFilter) {
                 profileQuery.eq('current_league', leagueFilter);
             }
+            if (scope === 'premium') {
+                profileQuery.neq('subscription_tier', 'free');
+            }
 
             const { data: profiles, error: profileError } = await profileQuery;
 
@@ -45,9 +48,9 @@ export async function GET(request: Request) {
                 user_id: p.id,
                 season_xp: p.total_xp,
                 league: p.current_league || 'Bronze',
-                rank_overall: offset + i + 1,
-                rank_in_league: offset + i + 1,
-                rank_premium_in_league: p.subscription_tier !== 'free' ? offset + i + 1 : null,
+                rank_overall: scope === 'overall' ? offset + i + 1 : null,
+                rank_in_league: scope === 'league' ? offset + i + 1 : null,
+                rank_premium_in_league: scope === 'premium' ? offset + i + 1 : null,
                 profiles: {
                     id: p.id,
                     full_name: p.full_name,
@@ -90,19 +93,28 @@ export async function GET(request: Request) {
 
         if (snapError || !snapshots || snapshots.length === 0) {
             // Fallback to basic profiles query if view is empty or errors
-            const { data: profiles } = await supabase
+            let fallbackQuery = supabase
                 .from('profiles')
                 .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')
                 .order('total_xp', { ascending: false })
                 .range(offset, offset + limit - 1);
 
+            if (leagueFilter) {
+                fallbackQuery = fallbackQuery.eq('current_league', leagueFilter);
+            }
+            if (scope === 'premium') {
+                fallbackQuery = fallbackQuery.neq('subscription_tier', 'free');
+            }
+
+            const { data: profiles } = await fallbackQuery;
+
             const formatted = (profiles || []).map((p, i) => ({
                 user_id: p.id,
                 season_xp: p.total_xp,
                 league: p.current_league || 'Bronze',
-                rank_overall: offset + i + 1,
-                rank_in_league: offset + i + 1,
-                rank_premium_in_league: p.subscription_tier !== 'free' ? offset + i + 1 : null,
+                rank_overall: scope === 'overall' ? offset + i + 1 : null,
+                rank_in_league: scope === 'league' ? offset + i + 1 : null,
+                rank_premium_in_league: scope === 'premium' ? offset + i + 1 : null,
                 profiles: { id: p.id, full_name: p.full_name, avatar_url: p.avatar_url, country: p.country, current_level: p.current_level, subscription_tier: p.subscription_tier }
             }));
             return NextResponse.json({ data: formatted, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true } });
