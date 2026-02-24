@@ -85,10 +85,17 @@ export async function GET(request: Request) {
             distance_to_relegate: Math.max(0, (total - relegateCount) - snapshot.rank_in_league)
         };
 
+        // 6. Get all-time rank
+        const { count: rankAllTime } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .gt('total_xp', profile.total_xp);
+
         return NextResponse.json({
             data: {
                 ...snapshot,
-                total_xp: profile.total_xp
+                total_xp: profile.total_xp,
+                rank_all_time: (rankAllTime || 0) + 1
             },
             distances
         });

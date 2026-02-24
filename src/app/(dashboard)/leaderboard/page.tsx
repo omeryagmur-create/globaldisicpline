@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 
 const LeaderboardTable = dynamic(() => import("@/components/leaderboard/LeaderboardTable").then(mod => mod.LeaderboardTable), {
     ssr: false,
@@ -21,7 +22,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Zap, ShieldCheck, Users, TrendingUp, Globe, Target, Crown } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LeagueTier, LEAGUE_CONFIG } from "@/lib/leagues";
-import { cn } from "@/lib/utils";
 
 interface ProfileData {
     id: string;
@@ -122,7 +122,7 @@ export default function LeaderboardPage() {
         }
     }, [PAGE_SIZE]);
 
-    // Reload when mode or league changes (but not on first run â€” already loaded in parallel)
+    // Reload when mode or league changes (but not on first run)
     const [firstRun, setFirstRun] = useState(true);
     useEffect(() => {
         if (firstRun) { setFirstRun(false); return; }
@@ -172,7 +172,7 @@ export default function LeaderboardPage() {
                 </Tabs>
             </div>
 
-            {/* Countdown Banner */}
+            {/* Countdown Banner - Only for seasonal modes */}
             {mode !== 'all_time' && metadata && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
                     <SeasonCountdown
@@ -304,16 +304,23 @@ export default function LeaderboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-5 hover:bg-white/[0.08] transition-all">
                         <div className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: `${activeLeagueConfig.color}20`, border: `1px solid ${activeLeagueConfig.color}40` }}>
-                            <Target className="h-7 w-7" style={{ color: activeLeagueConfig.color }} />
+                            style={{ backgroundColor: mode === 'all_time' ? '#06b6d420' : `${activeLeagueConfig.color}20`, border: `1px solid ${mode === 'all_time' ? '#06b6d440' : activeLeagueConfig.color + '40'}` }}>
+                            <Target className="h-7 w-7" style={{ color: mode === 'all_time' ? '#06b6d4' : activeLeagueConfig.color }} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut Sıralaman</p>
-                            <p className="text-xl font-black text-white">#{myData.data.rank_in_league} — {myData.data.league}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: mode === 'all_time' ? '#06b6d4' : activeLeagueConfig.color }}>
+                                {mode === 'all_time' ? 'Tüm Zamanlar Sıralaman' : 'Mevcut Sıralaman'}
+                            </p>
+                            <p className="text-xl font-black text-white">
+                                #{mode === 'all_time' ? myData.data.rank_all_time : myData.data.rank_in_league}
+                                {mode !== 'all_time' && ` — ${myData.data.league}`}
+                            </p>
                             <div className="flex gap-4 mt-1">
-                                <p className="text-[10px] text-white/50 uppercase tracking-widest leading-none">
-                                    <span className="text-white font-bold">{myData.data.season_xp?.toLocaleString()} XP</span> Sezon
-                                </p>
+                                {mode !== 'all_time' && (
+                                    <p className="text-[10px] text-white/50 uppercase tracking-widest leading-none">
+                                        <span className="text-white font-bold">{myData.data.season_xp?.toLocaleString()} XP</span> Sezon
+                                    </p>
+                                )}
                                 <p className="text-[10px] text-white/30 uppercase tracking-widest leading-none">
                                     <span className="text-white/60 font-bold">{myData.data.total_xp?.toLocaleString()} XP</span> Toplam
                                 </p>
@@ -321,7 +328,7 @@ export default function LeaderboardPage() {
                         </div>
                     </div>
 
-                    {myData.distances && (
+                    {mode !== 'all_time' && myData.distances && (
                         <div className={cn(
                             "p-6 rounded-3xl flex items-center gap-5 transition-all",
                             myData.distances.distance_to_promote <= 0
@@ -355,6 +362,19 @@ export default function LeaderboardPage() {
                                         ? `${myData.distances.distance_to_promote} kişi önünde yükselebilirsin`
                                         : "Sezonu böyle bitir!"}
                                 </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {mode === 'all_time' && (
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-5 hover:bg-white/[0.08] transition-all">
+                            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                <Crown className="h-7 w-7 text-amber-400" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400">Genel Başarım</p>
+                                <p className="text-xl font-black text-white">Efsaneler Arasında</p>
+                                <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Disiplin yolculuğun devam ediyor</p>
                             </div>
                         </div>
                     )}
