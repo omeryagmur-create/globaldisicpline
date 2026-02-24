@@ -6,6 +6,9 @@ export type Json =
     | { [key: string]: Json | undefined }
     | Json[]
 
+export type LeagueTierEnum = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Emerald' | 'Diamond' | 'Master' | 'Grandmaster';
+
+
 export interface Database {
     public: {
         Tables: {
@@ -23,7 +26,7 @@ export interface Database {
                     current_streak: number
                     longest_streak: number
                     last_activity_date: string | null
-                    current_league: string | null
+                    current_league: LeagueTierEnum | null
                     tier: string /* @deprecated use current_league instead */
                     subscription_tier: string
                     is_admin: boolean
@@ -44,7 +47,7 @@ export interface Database {
                     current_streak?: number
                     longest_streak?: number
                     last_activity_date?: string | null
-                    current_league?: string | null
+                    current_league?: LeagueTierEnum | null
                     tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
@@ -65,7 +68,7 @@ export interface Database {
                     current_streak?: number
                     longest_streak?: number
                     last_activity_date?: string | null
-                    current_league?: string | null
+                    current_league?: LeagueTierEnum | null
                     tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
@@ -299,11 +302,26 @@ export interface Database {
                     created_at?: string
                 }
             }
+
+            league_seasons: {
+                Row: { id: string; name: string; starts_at: string; ends_at: string | null; status: string; created_at: string }
+                Insert: { id?: string; name: string; starts_at?: string; ends_at?: string | null; status?: string; created_at?: string }
+                Update: { id?: string; name?: string; starts_at?: string; ends_at?: string | null; status?: string; created_at?: string }
+            }
+            league_snapshots: {
+                Row: { id: string; season_id: string; user_id: string; league: LeagueTierEnum; season_xp: number; rank_overall: number; rank_in_league: number; rank_premium_in_league: number | null; created_at: string }
+                Insert: { id?: string; season_id: string; user_id: string; league: LeagueTierEnum; season_xp?: number; rank_overall?: number; rank_in_league?: number; rank_premium_in_league?: number | null; created_at?: string }
+                Update: { id?: string; season_id?: string; user_id?: string; league?: LeagueTierEnum; season_xp?: number; rank_overall?: number; rank_in_league?: number; rank_premium_in_league?: number | null; created_at?: string }
+            }
+            league_movements: {
+                Row: { id: string; season_id: string; user_id: string; from_league: LeagueTierEnum; to_league: LeagueTierEnum; movement: string; reason: string | null; created_at: string }
+                Insert: { id?: string; season_id: string; user_id: string; from_league: LeagueTierEnum; to_league: LeagueTierEnum; movement: string; reason?: string | null; created_at?: string }
+                Update: { id?: string; season_id?: string; user_id?: string; from_league?: LeagueTierEnum; to_league?: LeagueTierEnum; movement?: string; reason?: string | null; created_at?: string }
+            }
         }
     }
 }
 
-export type LeagueTierEnum = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Emerald' | 'Diamond' | 'Master' | 'Grandmaster'
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type FocusSession = Database['public']['Tables']['focus_sessions']['Row']

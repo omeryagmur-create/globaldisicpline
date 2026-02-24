@@ -31,6 +31,7 @@ interface UserRow {
     total_xp: number;
     current_streak: number;
     is_admin: boolean;
+    current_league: string;
     created_at: string;
 }
 
@@ -45,7 +46,7 @@ export function UserManagement() {
         const supabase = createClient();
         const { data, error } = await supabase
             .from("profiles")
-            .select("id, email, full_name, total_xp, current_streak, is_admin, created_at")
+            .select("id, email, full_name, total_xp, current_streak, is_admin, current_league, created_at")
             .order("total_xp", { ascending: false })
             .limit(100);
 
@@ -64,7 +65,7 @@ export function UserManagement() {
         const supabase = createClient();
         const query = supabase
             .from("profiles")
-            .select("id, email, full_name, total_xp, current_streak, is_admin, created_at")
+            .select("id, email, full_name, total_xp, current_streak, is_admin, current_league, created_at")
             .order("total_xp", { ascending: false })
             .limit(100);
 
@@ -86,11 +87,7 @@ export function UserManagement() {
     const formatDate = (iso: string) =>
         new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-    const getXpTier = (xp: number) => {
-        if (xp >= 10000) return "Elite";
-        if (xp >= 3000) return "Pro";
-        return "Free";
-    };
+    // Replaced legacy getXpTier with current_league rendering
 
     return (
         <div className="space-y-4">
@@ -137,7 +134,7 @@ export function UserManagement() {
                                 </TableCell>
                             </TableRow>
                         ) : filteredUsers.map((user) => {
-                            const tier = getXpTier(user.total_xp);
+                            const tier = user.current_league || "Bronze";
                             return (
                                 <TableRow key={user.id}>
                                     <TableCell>
@@ -147,7 +144,7 @@ export function UserManagement() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={user.is_admin ? "default" : tier === "Elite" ? "default" : tier === "Pro" ? "secondary" : "outline"}>
+                                        <Badge variant={user.is_admin ? "default" : tier === "Master" || tier === "Grandmaster" ? "default" : "secondary"}>
                                             {user.is_admin ? "Admin" : tier}
                                         </Badge>
                                     </TableCell>

@@ -46,7 +46,7 @@ export function DailyReflectionForm() {
                     <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
                         <span>Failure</span>
                         <span>Standard</span>
-                        <span>Elite</span>
+                        <span>Master</span>
                     </div>
                 </div>
 

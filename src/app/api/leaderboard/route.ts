@@ -1,7 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+import { calculateFallbackRanks } from '@/lib/leaderboardUtils';
+
 export const dynamic = 'force-dynamic';
+
+async function getFallbackLeaderboard(supabase: any, scope: string, leagueFilter: string | null, offset: number, limit: number, activeSeasonId: string | null) {
+    const { data: allProfiles, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier');
+
+    if (error || !allProfiles) return { error: 'Failed to fetch leaderboard' };
+
+    const data = calculateFallbackRanks(allProfiles, scope, leagueFilter, offset, limit);
+    return { data, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true } };
+}
 
 export async function GET(request: Request) {
     try {
@@ -24,44 +37,9 @@ export async function GET(request: Request) {
 
         // If no active season, fall back to profiles table for basic ranking
         if (seasonError || !activeSeason) {
-            const profileQuery = supabase
-                .from('profiles')
-                .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')
-                .order('total_xp', { ascending: false })
-                .range(offset, offset + limit - 1);
-
-            if (leagueFilter) {
-                profileQuery.eq('current_league', leagueFilter);
-            }
-            if (scope === 'premium') {
-                profileQuery.neq('subscription_tier', 'free');
-            }
-
-            const { data: profiles, error: profileError } = await profileQuery;
-
-            if (profileError) {
-                return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 });
-            }
-
-            // Convert to snapshot-like format
-            const formatted = (profiles || []).map((p, i) => ({
-                user_id: p.id,
-                season_xp: p.total_xp,
-                league: p.current_league || 'Bronze',
-                rank_overall: scope === 'overall' ? offset + i + 1 : null,
-                rank_in_league: scope === 'league' ? offset + i + 1 : null,
-                rank_premium_in_league: scope === 'premium' ? offset + i + 1 : null,
-                profiles: {
-                    id: p.id,
-                    full_name: p.full_name,
-                    avatar_url: p.avatar_url,
-                    country: p.country,
-                    current_level: p.current_level,
-                    subscription_tier: p.subscription_tier,
-                }
-            }));
-
-            return NextResponse.json({ data: formatted, metadata: { scope, league: leagueFilter, fallback: true } });
+            const fallback = await getFallbackLeaderboard(supabase, scope, leagueFilter, offset, limit, null);
+            if (fallback.error) return NextResponse.json({ error: fallback.error }, { status: 500 });
+            return NextResponse.json(fallback);
         }
 
         const activeSeasonId = activeSeason.id;
@@ -92,32 +70,9 @@ export async function GET(request: Request) {
         const { data: snapshots, error: snapError } = await snapshotQuery;
 
         if (snapError || !snapshots || snapshots.length === 0) {
-            // Fallback to basic profiles query if view is empty or errors
-            let fallbackQuery = supabase
-                .from('profiles')
-                .select('id, full_name, avatar_url, country, total_xp, current_level, current_league, subscription_tier')
-                .order('total_xp', { ascending: false })
-                .range(offset, offset + limit - 1);
-
-            if (leagueFilter) {
-                fallbackQuery = fallbackQuery.eq('current_league', leagueFilter);
-            }
-            if (scope === 'premium') {
-                fallbackQuery = fallbackQuery.neq('subscription_tier', 'free');
-            }
-
-            const { data: profiles } = await fallbackQuery;
-
-            const formatted = (profiles || []).map((p, i) => ({
-                user_id: p.id,
-                season_xp: p.total_xp,
-                league: p.current_league || 'Bronze',
-                rank_overall: scope === 'overall' ? offset + i + 1 : null,
-                rank_in_league: scope === 'league' ? offset + i + 1 : null,
-                rank_premium_in_league: scope === 'premium' ? offset + i + 1 : null,
-                profiles: { id: p.id, full_name: p.full_name, avatar_url: p.avatar_url, country: p.country, current_level: p.current_level, subscription_tier: p.subscription_tier }
-            }));
-            return NextResponse.json({ data: formatted, metadata: { seasonId: activeSeasonId, scope, league: leagueFilter, fallback: true } });
+            const fallback = await getFallbackLeaderboard(supabase, scope, leagueFilter, offset, limit, activeSeasonId);
+            if (fallback.error) return NextResponse.json({ error: fallback.error }, { status: 500 });
+            return NextResponse.json(fallback);
         }
 
         // 3. Fetch profiles for these user IDs
