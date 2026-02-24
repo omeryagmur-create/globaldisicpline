@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { Timer, Zap } from "lucide-react";
@@ -31,7 +31,7 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
                 <Zap className="h-5 w-5 text-amber-400" />
                 <div>
                     <p className="text-sm font-bold text-white uppercase tracking-wider">Sezon Haz\u0131rlan\u0131yor</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">S\u0131ralamalar yak\u0131nda aktiflek\u015fecek</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[0.2em]">S\u0131ralamalar yak\u0131nda aktifleşecek</p>
                 </div>
             </div>
         );
@@ -95,3 +95,5 @@ export const SeasonCountdown = ({ secondsUntilEnd, seasonEndsAt }: SeasonCountdo
         </div>
     );
 };
+
+
