@@ -12,6 +12,10 @@ const LeaderboardHero = dynamic(() => import("@/components/leaderboard/Leaderboa
     ssr: false,
     loading: () => <div className="h-48 animate-pulse bg-white/[0.02] rounded-3xl" />
 });
+const SeasonCountdown = dynamic(() => import("@/components/leaderboard/SeasonCountdown").then(mod => mod.SeasonCountdown), {
+    ssr: false,
+    loading: () => <div className="h-20 animate-pulse bg-white/[0.02] rounded-2xl" />
+});
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Zap, ShieldCheck, Users, TrendingUp, Globe, Target, Crown } from "lucide-react";
@@ -162,22 +166,34 @@ export default function LeaderboardPage() {
                             <Crown className="h-3.5 w-3.5 mr-1.5" /> Premium
                         </TabsTrigger>
                         <TabsTrigger value="all_time" className="px-5 h-10 data-[state=active]:bg-cyan-500 data-[state=active]:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-white/40 hover:text-white">
-                            <Zap className="h-3.5 w-3.5 mr-1.5" /> TÃ¼m Zamanlar
+                            <Zap className="h-3.5 w-3.5 mr-1.5" /> Tüm Zamanlar
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
+
+            {/* Countdown Banner */}
+            {mode !== 'all_time' && metadata && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
+                    <SeasonCountdown
+                        secondsUntilEnd={metadata.seconds_until_end || 0}
+                        seasonEndsAt={metadata.season_ends_at}
+                    />
+                </div>
+            )}
 
             {/* Season Info Banner */}
             {mode !== 'all_time' && metadata?.is_all_zero_top && (
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
                     <Zap className="h-5 w-5 text-indigo-400 animate-pulse" />
                     <div>
-                        <p className="text-sm font-bold text-white">Sezon Yeni BaÅŸladÄ±! ğŸš€</p>
-                        <p className="text-xs text-white/50">SÄ±ralama ilk XP kazanÄ±mlarÄ±yla birlikte netleÅŸecektir. Åimdi Ã§alÄ±ÅŸmaya baÅŸla ve zirveye yerleÅŸ!</p>
+                        <p className="text-sm font-bold text-white">Sezon Yeni Başladı! 🚀</p>
+                        <p className="text-xs text-white/50">Sıralama ilk XP kazanımlarıyla birlikte netleşecektir. Şimdi çalışmaya başla ve zirveye yerleş!</p>
                     </div>
                 </div>
-            )}            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
+            )}
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase tracking-widest px-2">
                     <TrendingUp className="h-3 w-3" />
                     {mode === 'all_time'
@@ -247,13 +263,13 @@ export default function LeaderboardPage() {
                         <div className="absolute inset-0 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
                         <div className="absolute inset-2 rounded-full border-2 border-violet-500/30 border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
                     </div>
-                    <p className="text-white/30 font-bold text-sm uppercase tracking-widest">YÃ¼kleniyor...</p>
+                    <p className="text-white/30 font-bold text-sm uppercase tracking-widest">Yükleniyor...</p>
                 </div>
             ) : users.length === 0 ? (
                 <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/10">
                     <Trophy className="mx-auto h-12 w-12 text-white/20 mb-4" />
-                    <h3 className="text-lg font-bold text-white mb-2">Bu ligde henÃ¼z kimse yok</h3>
-                    <p className="text-white/40 text-sm">Sezon yeni baÅŸladÄ± veya bu ligde XP kazanan kullanÄ±cÄ± bulunmuyor.</p>
+                    <h3 className="text-lg font-bold text-white mb-2">Bu ligde henüz kimse yok</h3>
+                    <p className="text-white/40 text-sm">Sezon yeni başladı veya bu ligde XP kazanan kullanıcı bulunmuyor.</p>
                 </div>
             ) : (
                 <div className="space-y-6">
@@ -264,7 +280,7 @@ export default function LeaderboardPage() {
                     {totalCount !== null && (
                         <div className="flex items-center justify-between px-2">
                             <p className="text-xs text-white/30 font-semibold">
-                                {users.length.toLocaleString()} / {totalCount.toLocaleString()} oyuncu gÃ¶steriliyor
+                                {users.length.toLocaleString()} / {totalCount.toLocaleString()} oyuncu gösteriliyor
                             </p>
                             {users.length < totalCount && (
                                 <button
@@ -272,11 +288,11 @@ export default function LeaderboardPage() {
                                     disabled={loading}
                                     className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all disabled:opacity-30"
                                 >
-                                    {loading ? 'YÃ¼kleniyor...' : 'Daha Fazla GÃ¶ster'}
+                                    {loading ? 'Yükleniyor...' : 'Daha Fazla Göster'}
                                 </button>
                             )}
                             {users.length >= totalCount && totalCount > PAGE_SIZE && (
-                                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">TÃ¼m oyuncular yÃ¼klendi âœ“</span>
+                                <span className="text-xs text-white/20 font-bold uppercase tracking-widest">Tüm oyuncular yüklendi ✓</span>
                             )}
                         </div>
                     )}
@@ -292,8 +308,8 @@ export default function LeaderboardPage() {
                             <Target className="h-7 w-7" style={{ color: activeLeagueConfig.color }} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut SÄ±ralaman</p>
-                            <p className="text-xl font-black text-white">#{myData.data.rank_in_league} â€” {myData.data.league}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: activeLeagueConfig.color }}>Mevcut Sıralaman</p>
+                            <p className="text-xl font-black text-white">#{myData.data.rank_in_league} — {myData.data.league}</p>
                             <div className="flex gap-4 mt-1">
                                 <p className="text-[10px] text-white/50 uppercase tracking-widest leading-none">
                                     <span className="text-white font-bold">{myData.data.season_xp?.toLocaleString()} XP</span> Sezon
@@ -331,13 +347,13 @@ export default function LeaderboardPage() {
                                         myData.distances.distance_to_relegate <= 0 ? "text-red-400" : "text-white/40"
                                 )}>Sezon Durumu</p>
                                 <p className="text-xl font-black text-white">
-                                    {myData.distances.distance_to_promote <= 0 ? "YÃ¼kselme BÃ¶lgesi ğŸš€" :
-                                        myData.distances.distance_to_relegate <= 0 ? "DÃ¼ÅŸme Tehlikesi âš ï¸" : "GÃ¼venli BÃ¶lge âœ…"}
+                                    {myData.distances.distance_to_promote <= 0 ? "Yükselme Bölgesi 🚀" :
+                                        myData.distances.distance_to_relegate <= 0 ? "Düşme Tehlikesi ⚠️" : "Güvenli Bölge ✅"}
                                 </p>
                                 <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">
                                     {myData.distances.distance_to_promote > 0
-                                        ? `${myData.distances.distance_to_promote} kiÅŸi Ã¶nÃ¼nde yÃ¼kselebilirsin`
-                                        : "Sezonu bÃ¶yle bitir!"}
+                                        ? `${myData.distances.distance_to_promote} kişi önünde yükselebilirsin`
+                                        : "Sezonu böyle bitir!"}
                                 </p>
                             </div>
                         </div>
@@ -367,7 +383,3 @@ function formatSnapshots(data: any[], scope: string): LeaderboardUser[] {
         };
     });
 }
-
-
-
-

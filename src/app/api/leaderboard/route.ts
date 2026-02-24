@@ -94,27 +94,50 @@ export async function GET(request: Request) {
 
         const supabase = await createClient();
 
-        if (scope === 'all_time') {
-            const result = await getAllTimeLeaderboard(supabase, leagueFilter, offset, limit);
-            if ((result as any).error) {
-                return NextResponse.json({ error: (result as any).error }, { status: 500 });
-            }
-            return NextResponse.json(result);
-        }
-
-        // 1. Get active season ID - fast indexed query
+        // 0. Get active season ID - fast indexed query
         const { data: activeSeason, error: seasonError } = await supabase
             .from('league_seasons')
             .select('id, starts_at, ends_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
+
+        const seasonMeta = activeSeason ? {
+            seasonId: activeSeason.id,
+            season_starts_at: activeSeason.starts_at,
+            season_ends_at: activeSeason.ends_at,
+            seconds_until_end: Math.max(0, Math.floor((new Date(activeSeason.ends_at).getTime() - Date.now()) / 1000))
+        } : {
+            seasonId: null,
+            season_starts_at: null,
+            season_ends_at: null,
+            seconds_until_end: 0
+        };
+
+        if (scope === 'all_time') {
+            const result = await getAllTimeLeaderboard(supabase, leagueFilter, offset, limit);
+            if ((result as any).error) {
+                return NextResponse.json({ error: (result as any).error }, { status: 500 });
+            }
+            const metadata = (result as any).metadata;
+            (result as any).metadata = {
+                ...metadata,
+                ...seasonMeta
+            };
+            return NextResponse.json(result);
+        }
 
         // If no active season, fall back to profiles table for basic ranking
         if (seasonError || !activeSeason) {
             const fallback = await getFallbackLeaderboard(supabase, scope, leagueFilter, offset, limit, null);
             if (fallback.error) return NextResponse.json({ error: fallback.error }, { status: 500 });
+
+            const metadata = (fallback as any).metadata;
+            (fallback as any).metadata = {
+                ...metadata,
+                ...seasonMeta
+            };
             return NextResponse.json(fallback);
         }
 
@@ -132,13 +155,13 @@ export async function GET(request: Request) {
 
         switch (scope) {
             case 'league':
-                snapshotQuery = snapshotQuery.not('rank_in_league', 'is', null).order('rank_in_league');
+                snapshotQuery = snapshotQuery.not('rank_in_league', 'is', null).order('rank_in_league', { ascending: true });
                 break;
             case 'premium':
-                snapshotQuery = snapshotQuery.not('rank_premium_in_league', 'is', null).order('rank_premium_in_league');
+                snapshotQuery = snapshotQuery.not('rank_premium_in_league', 'is', null).order('rank_premium_in_league', { ascending: true });
                 break;
             default:
-                snapshotQuery = snapshotQuery.not('rank_overall', 'is', null).order('rank_overall');
+                snapshotQuery = snapshotQuery.not('rank_overall', 'is', null).order('rank_overall', { ascending: true });
         }
 
         snapshotQuery = snapshotQuery.range(offset, offset + limit - 1);
@@ -148,6 +171,12 @@ export async function GET(request: Request) {
         if (snapError || !snapshots || snapshots.length === 0) {
             const fallback = await getFallbackLeaderboard(supabase, scope, leagueFilter, offset, limit, activeSeasonId);
             if (fallback.error) return NextResponse.json({ error: fallback.error }, { status: 500 });
+
+            const metadata = (fallback as any).metadata;
+            (fallback as any).metadata = {
+                ...metadata,
+                ...seasonMeta
+            };
             return NextResponse.json(fallback);
         }
 
@@ -178,12 +207,10 @@ export async function GET(request: Request) {
         return NextResponse.json({
             data,
             metadata: {
-                seasonId: activeSeasonId,
+                ...seasonMeta,
                 scope,
                 league: leagueFilter,
                 total_count: count,
-                season_starts_at: activeSeason.starts_at,
-                season_ends_at: activeSeason.ends_at,
                 is_all_zero_top: isAllZero,
                 xp_basis: 'season_xp'
             }
