@@ -61,7 +61,11 @@ export default function RewardsPage() {
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            setResetTime(`${hours}h ${minutes}m ${seconds}s`);
+            const h = hours > 0 ? `${hours}h ` : "";
+            const m = minutes > 0 ? `${minutes}m ` : "";
+            const s = `${seconds}s`;
+
+            setResetTime(`${h}${m}${s}`);
         };
 
         updateTimer();
@@ -72,7 +76,7 @@ export default function RewardsPage() {
     const handlePurchase = async (rewardId: string, cost: number) => {
         if (!profile) return;
         if (profile.total_xp < cost) {
-            toast.error(t.auth.errorUnexpected); // Or more specific "Insufficient XP"
+            toast.error(t.rewards.insufficientXP);
             return;
         }
 
@@ -86,10 +90,10 @@ export default function RewardsPage() {
             const result = await res.json();
 
             if (result.success) {
-                toast.success(result.message || "Success!");
+                toast.success(result.message || t.rewards.purchaseSuccess);
                 await Promise.all([loadDashboard(), fetchProfile()]);
             } else {
-                toast.error(result.message || "Failed.");
+                toast.error(result.message || t.rewards.purchaseFailed);
             }
         } catch (error) {
             toast.error(t.common.systemError);
@@ -108,10 +112,13 @@ export default function RewardsPage() {
             const result = await res.json();
 
             if (result.success) {
-                toast.success(result.xp_reward ? `+${result.xp_reward} XP Earned!` : "Reward Claimed!");
+                const toastMsg = result.xp_reward
+                    ? t.rewards.xpEarned.replace('{count}', result.xp_reward.toString())
+                    : t.rewards.claimSuccess;
+                toast.success(toastMsg);
                 await Promise.all([loadDashboard(), fetchProfile()]);
             } else {
-                toast.error(result.message || "Failed to claim.");
+                toast.error(result.message || t.rewards.claimFailed);
             }
         } catch (error) {
             toast.error(t.common.systemError);
@@ -185,7 +192,9 @@ export default function RewardsPage() {
                     <CardContent className="pt-6 flex items-center justify-between">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">{t.rewards.statCurrentTier}</p>
-                            <h2 className="text-4xl font-black">{profile?.current_league || "Bronze"}</h2>
+                            <h2 className="text-4xl font-black">
+                                {t.leagues[(profile?.current_league?.toLowerCase() as keyof typeof t.leagues) || "bronze"]}
+                            </h2>
                         </div>
                         <div className="h-16 w-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
                             <Shield className="h-8 w-8 text-amber-500" />
@@ -332,11 +341,11 @@ export default function RewardsPage() {
                                 <Button
                                     size="sm"
                                     variant={mission.isClaimed ? "ghost" : "outline"}
-                                    disabled={mission.isClaimed || processingId === mission.id}
+                                    disabled={mission.isClaimed || processingId === mission.id || mission.progress < 100}
                                     onClick={() => handleClaim(mission.id)}
                                 >
                                     {processingId === mission.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {mission.isClaimed ? t.rewards.claimedButton : t.rewards.claimButton}
+                                    {mission.isClaimed ? t.rewards.claimedButton : (mission.progress < 100 ? `${mission.progress}%` : t.rewards.claimButton)}
                                 </Button>
                             </div>
                         </div>

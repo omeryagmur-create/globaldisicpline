@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS mission_definitions (
 -- Seed Missions (Unified)
 DELETE FROM mission_definitions; -- Cleanup old if any
 INSERT INTO mission_definitions (id, title, description, reward_xp, requirement_type, requirement_value) VALUES
-('morning_monk', 'Morning Monk', 'Start a focus session before 9 AM', 200, 'morning_session', 9),
+('morning_monk', 'Morning Monk', 'Start a focus session before 9 AM', 200, 'morning_session', 1),
 ('deep_thinker', 'Deep Thinker', 'Focus for 2 hours (120 min) total today', 500, 'total_minutes', 120),
 ('planner_pro', 'Planner Pro', 'Mark 5 tasks as completed', 300, 'task_count', 5);
 
@@ -79,12 +79,16 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Fix Claim Mission Reward RPC: Secure reward calculation & removal of p_xp_reward injection
+-- Fix Claim Mission Reward RPC: Secure reward calculation & validation of mission completion
 CREATE OR REPLACE FUNCTION claim_mission_reward(p_user_id uuid, p_mission_id text, p_idempotency_key text)
 RETURNS json AS $$
 DECLARE
     v_claim_id uuid;
     v_xp_reward integer;
+    v_req_type text;
+    v_req_value integer;
+    v_current_val integer := 0;
+    v_today date := CURRENT_DATE;
 BEGIN
     -- 1. Check idempotency
     SELECT id INTO v_claim_id FROM daily_mission_claims WHERE idempotency_key = p_idempotency_key;
@@ -92,22 +96,59 @@ BEGIN
         RETURN json_build_object('success', true, 'message', 'Already claimed (idempotent)', 'claim_id', v_claim_id);
     END IF;
 
-    -- 2. Validate mission and get reward XP from DB (Security: Do not trust client value)
-    SELECT reward_xp INTO v_xp_reward FROM mission_definitions WHERE id = p_mission_id;
+    -- 2. Get mission definition
+    SELECT reward_xp, requirement_type, requirement_value 
+    INTO v_xp_reward, v_req_type, v_req_value 
+    FROM mission_definitions WHERE id = p_mission_id;
+    
     IF v_xp_reward IS NULL THEN
         RETURN json_build_object('success', false, 'message', 'Mission definition not found');
     END IF;
 
-    -- 3. Grant XP via ledger
+    -- 3. VALIDATE ELIGIBILITY (Security fix)
+    IF v_req_type = 'morning_session' THEN
+        -- Check if user started a focus session before 9 AM today
+        SELECT count(*) INTO v_current_val 
+        FROM focus_sessions 
+        WHERE user_id = p_user_id 
+          AND is_completed = true 
+          AND started_at::date = v_today
+          AND EXTRACT(HOUR FROM started_at) < 9;
+    ELSIF v_req_type = 'total_minutes' THEN
+        -- Check total minutes today
+        SELECT COALESCE(sum(duration_minutes), 0) INTO v_current_val 
+        FROM focus_sessions 
+        WHERE user_id = p_user_id 
+          AND is_completed = true 
+          AND started_at::date = v_today;
+    ELSIF v_req_type = 'task_count' THEN
+        -- Check tasks completed today
+        SELECT count(*) INTO v_current_val 
+        FROM daily_tasks 
+        WHERE user_id = p_user_id 
+          AND is_completed = true 
+          AND completed_at::date = v_today;
+    END IF;
+
+    IF v_current_val < v_req_value THEN
+        RETURN json_build_object(
+            'success', false, 
+            'message', 'Mission not completed yet', 
+            'current', v_current_val, 
+            'required', v_req_value
+        );
+    END IF;
+
+    -- 4. Grant XP via ledger
     INSERT INTO xp_ledger (user_id, amount, reason, idempotency_key)
     VALUES (p_user_id, v_xp_reward, 'mission_claim:' || p_mission_id, p_idempotency_key);
 
-    -- 4. Update profile balance WITH LOCK
+    -- 5. Update profile balance WITH LOCK
     UPDATE profiles SET total_xp = total_xp + v_xp_reward WHERE id = p_user_id;
 
-    -- 5. Record claim
-    INSERT INTO daily_mission_claims (user_id, mission_id, xp_reward, idempotency_key)
-    VALUES (p_user_id, p_mission_id, v_xp_reward, p_idempotency_key)
+    -- 6. Record claim
+    INSERT INTO daily_mission_claims (user_id, mission_id, xp_reward, idempotency_key, day)
+    VALUES (p_user_id, p_mission_id, v_xp_reward, p_idempotency_key, v_today)
     RETURNING id INTO v_claim_id;
 
     RETURN json_build_object('success', true, 'message', 'Mission reward claimed', 'claim_id', v_claim_id, 'xp_reward', v_xp_reward);
@@ -117,7 +158,7 @@ EXCEPTION
         IF v_claim_id IS NOT NULL THEN
             RETURN json_build_object('success', true, 'message', 'Already claimed (idempotent recovery)', 'claim_id', v_claim_id);
         END IF;
-        RETURN json_build_object('success', false, 'message', 'Already claimed today or idempotency violation');
+        RETURN json_build_object('success', false, 'message', 'Idempotency/Claim conflict');
     WHEN OTHERS THEN
         RETURN json_build_object('success', false, 'message', SQLERRM);
 END;

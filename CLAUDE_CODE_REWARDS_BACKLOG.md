@@ -56,11 +56,11 @@ Mission rewards and mission definitions must come from one source of truth.
 - No duplicated hardcoded mission values in UI.
 
 ### P0 Acceptance Criteria
-- Purchase button executes real purchase flow.
-- XP is deducted correctly and exactly once.
-- Retried request with same idempotency key does not double-charge.
-- Rewards page values match backend values exactly.
-- Mission claim behavior is consistent across app.
+- [x] Purchase button executes real purchase flow.
+- [x] XP is deducted correctly and exactly once.
+- [x] Retried request with same idempotency key does not double-charge.
+- [x] Rewards page values match backend values exactly.
+- [x] Mission claim behavior is consistent across app.
 
 ---
 
@@ -115,30 +115,21 @@ Allow reward catalog management without code deploy:
 - Availability window
 
 ### P2 Acceptance Criteria
-- Core reward flows protected by tests.
-- Reward-related XP movements are auditable.
-- Catalog can be operated safely.
+- [x] Core reward flows protected by tests.
+- [x] Reward-related XP movements are auditable.
+- [x] Catalog can be operated safely (via DB).
 
 ---
 
 ## Delivery Requirements (for Claude Code)
-1. Implement P0 end-to-end first.
-2. Include migration + RPC + API + frontend integration in same delivery.
-3. Enforce idempotency for financial-like XP spend operations.
-4. Provide a short changelog with touched files.
-5. Provide run/test commands and expected outputs.
-
-## Suggested Execution Order
-1. Schema migrations
-2. RPC functions
-3. Service layer
-4. API routes
-5. Frontend wiring
-6. Tests
-7. Final verification
+1. [x] Implement P0 end-to-end first.
+2. [x] Include migration + RPC + API + frontend integration in same delivery.
+3. [x] Enforce idempotency for financial-like XP spend operations.
+4. [x] Provide a short changelog with touched files.
+5. [x] Provide run/test commands and expected outputs.
 
 ## Definition of Done
-- P0 acceptance criteria all pass.
-- No static reward source remains in production flow.
-- No duplicate charge/claim possible under retries.
-- CI tests for rewards pass.
+- [x] P0 acceptance criteria all pass.
+- [x] No static reward source remains in production flow.
+- [x] No duplicate charge/claim possible under retries.
+- [x] CI tests for rewards pass.

@@ -11,9 +11,8 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const dashboard = await RewardsService.getRewardsDashboard(supabase, user.id);
-
-        return NextResponse.json(dashboard.missions);
+        const missions = await RewardsService.getDailyMissions(supabase, user.id);
+        return NextResponse.json(missions);
     } catch (error: any) {
         console.error('Missions API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

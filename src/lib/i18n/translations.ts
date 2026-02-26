@@ -493,6 +493,9 @@ export const translations = {
             remaining: 'REMAINING',
             liveFeed: 'Live Operative Feed',
             activeSession: 'Active Session',
+            claimSuccess: 'Reward Claimed!',
+            claimFailed: 'Failed to claim.',
+            xpEarned: '+{count} XP Earned!',
         },
 
         // ─── Leagues ────────────────────────────────────────────────────────
@@ -1002,6 +1005,9 @@ export const translations = {
             remaining: 'KALDI',
             liveFeed: 'Operatif Canlı Yayın',
             activeSession: 'Aktif Oturum',
+            claimSuccess: 'Ödül Alındı!',
+            claimFailed: 'Ödül alınamadı.',
+            xpEarned: '+{count} XP Kazandın!',
         },
 
         // ─── Ligler ────────────────────────────────────────────────────────
