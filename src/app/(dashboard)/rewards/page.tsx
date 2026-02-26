@@ -98,17 +98,17 @@ export default function RewardsPage() {
         }
     };
 
-    const handleClaim = async (missionId: string, xpReward: number) => {
+    const handleClaim = async (missionId: string) => {
         setProcessingId(missionId);
         try {
             const res = await fetch("/api/rewards/claim", {
                 method: "POST",
-                body: JSON.stringify({ missionId, xpReward }),
+                body: JSON.stringify({ missionId }),
             });
             const result = await res.json();
 
             if (result.success) {
-                toast.success(`+${xpReward} XP Earned!`);
+                toast.success(result.xp_reward ? `+${result.xp_reward} XP Earned!` : "Reward Claimed!");
                 await Promise.all([loadDashboard(), fetchProfile()]);
             } else {
                 toast.error(result.message || "Failed to claim.");
@@ -333,7 +333,7 @@ export default function RewardsPage() {
                                     size="sm"
                                     variant={mission.isClaimed ? "ghost" : "outline"}
                                     disabled={mission.isClaimed || processingId === mission.id}
-                                    onClick={() => handleClaim(mission.id, mission.rewardXP)}
+                                    onClick={() => handleClaim(mission.id)}
                                 >
                                     {processingId === mission.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     {mission.isClaimed ? t.rewards.claimedButton : t.rewards.claimButton}

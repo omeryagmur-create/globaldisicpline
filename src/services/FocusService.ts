@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { MissionEngine, FocusSessionRow } from '@/lib/missionEngine';
 import { useUserStore } from '@/stores/useUserStore';
 import { AnalyticsService } from './AnalyticsService';
 import { logger } from '@/lib/logger';
@@ -57,32 +56,7 @@ export class FocusService {
                 logger.error('Failed to update user XP via RPC', xpError, { userId, xpEarned });
             }
 
-            // 3. Mission Logic
-            const startOfToday = new Date();
-            startOfToday.setHours(0, 0, 0, 0);
-
-            const { data: todaySessions } = await supabase
-                .from('focus_sessions')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('is_completed', true)
-                .gte('completed_at', startOfToday.toISOString());
-
-            if (todaySessions) {
-                const typedSessions = todaySessions as FocusSessionRow[];
-                const totalMinutes = typedSessions
-                    .filter(s => !s.session_type?.startsWith('reward_'))
-                    .reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
-
-                await MissionEngine.awardMissionRewards(
-                    userId,
-                    typedSessions,
-                    totalMinutes,
-                    getTranslations
-                );
-            }
-
-            // 4. Analytics & Refresh
+            // 3. Analytics & Refresh
             AnalyticsService.trackEvent('SESSION_COMPLETE', {
                 duration: durationMinutes,
                 type: sessionType,

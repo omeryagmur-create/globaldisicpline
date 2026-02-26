@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 export interface Mission {
     id: string;
     title: string;
-    desc: string;
-    reward: number;
+    description: string;
+    rewardXP: number;
     progress: number;
-    isCompleted: boolean;
+    isClaimed: boolean;
 }
 
 interface DailyMissionsProps {
@@ -29,14 +29,8 @@ export function DailyMissions({ missions: providedMissions }: DailyMissionsProps
 
     // We map the provided missions to translated versions if they match the IDs in our i18n
     // If not, we use provided ones. Assuming missions come with ids '1', '2', '3'
-    const missions = providedMissions.map(m => {
-        if (m.id === '1') return { ...m, title: t.missions.mission1Title, desc: t.missions.mission1Desc };
-        if (m.id === '2') return { ...m, title: t.missions.mission2Title, desc: t.missions.mission2Desc };
-        if (m.id === '3') return { ...m, title: t.missions.mission3Title, desc: t.missions.mission3Desc };
-        return m;
-    });
-
-    const completedMissions = missions.filter(m => m.isCompleted).length;
+    const missions = providedMissions;
+    const completedMissions = missions.filter(m => m.isClaimed).length;
     const totalMissions = missions.length;
     const overallProgress = totalMissions > 0 ? (completedMissions / totalMissions) * 100 : 0;
 
@@ -84,7 +78,7 @@ export function DailyMissions({ missions: providedMissions }: DailyMissionsProps
                             key={mission.id}
                             className={cn(
                                 "relative p-3.5 rounded-xl border transition-all duration-200 group",
-                                mission.isCompleted
+                                mission.isClaimed
                                     ? "bg-emerald-500/5 border-emerald-500/15 opacity-70"
                                     : "bg-white/[0.03] border-white/[0.07] hover:border-white/15"
                             )}
@@ -93,11 +87,11 @@ export function DailyMissions({ missions: providedMissions }: DailyMissionsProps
                                 {/* Icon */}
                                 <div className={cn(
                                     "mt-0.5 h-8 w-8 rounded-xl border flex items-center justify-center shrink-0 transition-all",
-                                    mission.isCompleted
+                                    mission.isClaimed
                                         ? "bg-emerald-500/10 border-emerald-500/20"
                                         : cn(colors.bg, colors.border)
                                 )}>
-                                    {mission.isCompleted ? (
+                                    {mission.isClaimed ? (
                                         <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                                     ) : (
                                         <Icon className={cn("h-4 w-4", colors.text)} />
@@ -109,19 +103,19 @@ export function DailyMissions({ missions: providedMissions }: DailyMissionsProps
                                     <div className="flex items-start justify-between gap-2">
                                         <p className={cn(
                                             "text-sm font-semibold leading-tight",
-                                            mission.isCompleted ? "text-white/40 line-through" : "text-white/80"
+                                            mission.isClaimed ? "text-white/40 line-through" : "text-white/80"
                                         )}>
                                             {mission.title}
                                         </p>
                                         <div className="flex items-center gap-0.5 shrink-0">
                                             <Zap className="h-3 w-3 text-indigo-400" />
-                                            <span className="text-[11px] font-bold text-indigo-400">+{mission.reward}</span>
+                                            <span className="text-[11px] font-bold text-indigo-400">+{mission.rewardXP}</span>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-white/30 mt-0.5 line-clamp-1">{mission.desc}</p>
+                                    <p className="text-xs text-white/30 mt-0.5 line-clamp-1">{mission.description}</p>
 
                                     {/* Progress bar */}
-                                    {!mission.isCompleted && mission.progress > 0 && (
+                                    {!mission.isClaimed && mission.progress > 0 && (
                                         <div className="mt-2 space-y-1">
                                             <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                                                 <div

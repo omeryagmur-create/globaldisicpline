@@ -1,6 +1,7 @@
 "use client";
 
 import { useUserStore } from "@/stores/useUserStore";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { TypoStriker } from "@/components/games/TypoStriker";
 import { RewardsDashboard } from "@/services/RewardsService";
 
 export function XPMarket() {
+    const { t } = useLanguage();
     const { profile, fetchProfile } = useUserStore();
     const [dashboard, setDashboard] = useState<RewardsDashboard | null>(null);
     const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export function XPMarket() {
     const handleUnlock = async (rewardId: string, cost: number) => {
         if (!profile) return;
         if (profile.total_xp < cost) {
-            toast.error("Insufficient Discipline (XP) to unlock.");
+            toast.error(t.rewards.insufficientXP);
             return;
         }
 
@@ -58,13 +60,13 @@ export function XPMarket() {
             const result = await res.json();
 
             if (result.success) {
-                toast.success(result.message || "Purchase successful!");
+                toast.success(result.message || t.rewards.purchaseSuccess);
                 await Promise.all([loadDashboard(), fetchProfile()]);
             } else {
-                toast.error(result.message || "Purchase failed.");
+                toast.error(result.message || t.rewards.purchaseFailed);
             }
         } catch (error) {
-            toast.error("An error occurred during transaction.");
+            toast.error(t.rewards.transactionError);
         } finally {
             setProcessingId(null);
         }
@@ -99,8 +101,8 @@ export function XPMarket() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">XP Privilege Market</h2>
-                    <p className="text-muted-foreground font-medium">Trade discipline for functional rewards.</p>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">{t.rewards.xpMarketTitle}</h2>
+                    <p className="text-muted-foreground font-medium">{t.rewards.xpMarketSubtitle}</p>
                 </div>
                 <div className="bg-primary/20 px-4 py-2 rounded-xl border border-primary/30 flex items-center">
                     <Zap className="h-5 w-5 text-primary mr-2 fill-primary" />
@@ -133,7 +135,7 @@ export function XPMarket() {
                                 {isActive ? (
                                     <div className="w-full flex items-center justify-center py-2 bg-primary/10 rounded-lg border border-primary/20">
                                         <Clock className="h-4 w-4 mr-2 text-primary animate-pulse" />
-                                        <span className="font-black text-xs text-primary">{timeLeft} REMAINING</span>
+                                        <span className="font-black text-xs text-primary">{timeLeft} {t.rewards.remaining}</span>
                                     </div>
                                 ) : (
                                     <Button
@@ -145,11 +147,11 @@ export function XPMarket() {
                                         {processingId === item.id ? (
                                             <Loader2 className="h-3 w-3 animate-spin" />
                                         ) : currentXP >= item.costXP ? (
-                                            <>Unlock for {item.costXP} XP</>
+                                            <>{t.rewards.unlockFor} {item.costXP} XP</>
                                         ) : (
                                             <>
                                                 <Lock className="mr-2 h-3 w-3" />
-                                                Need {item.costXP - currentXP} More
+                                                {t.rewards.needMore.replace('{count}', (item.costXP - currentXP).toString())}
                                             </>
                                         )}
                                     </Button>
@@ -166,9 +168,9 @@ export function XPMarket() {
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <div className="h-3 w-3 bg-red-600 rounded-full animate-pulse" />
-                                <h3 className="text-white font-black uppercase tracking-widest text-sm">Live Operative Feed</h3>
+                                <h3 className="text-white font-black uppercase tracking-widest text-sm">{t.rewards.liveFeed}</h3>
                             </div>
-                            <Badge variant="outline" className="text-primary border-primary/20">Active Session</Badge>
+                            <Badge variant="outline" className="text-primary border-primary/20">{t.rewards.activeSession}</Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             {[

@@ -9,7 +9,6 @@ import { DailyMissions } from "@/components/dashboard/DailyMissions";
 import { Clock, Trophy, Star, Zap, LayoutDashboard, Flame, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import { MissionEngine } from "@/lib/missionEngine";
 
 export interface SessionData {
     id: string;
@@ -49,6 +48,14 @@ interface DashboardContentProps {
     yesterdaySessions: SessionData[];
     ranking: number;
     totalUserCount: number;
+    missions: {
+        id: string;
+        title: string;
+        description: string;
+        rewardXP: number;
+        isClaimed: boolean;
+        progress: number;
+    }[];
 }
 
 export function DashboardContent({
@@ -60,7 +67,8 @@ export function DashboardContent({
     todaySessions,
     yesterdaySessions,
     ranking,
-    totalUserCount
+    totalUserCount,
+    missions
 }: DashboardContentProps) {
     const { t } = useLanguage();
 
@@ -92,11 +100,10 @@ export function DashboardContent({
     const xpNeededForNextLevel = xpForNextLevel - xpForCurrentLevel;
     const progress = Math.min(100, Math.max(0, (xpInThisLevel / xpNeededForNextLevel) * 100));
 
-    const engineMissions = MissionEngine.getDailyMissions(todaySessions, todayMinutes);
-    const missions = engineMissions.map(m => ({
+    const missionsWithLabels = missions.map(m => ({
         ...m,
-        title: m.titleKey ? (t.missions as Record<string, string>)[m.titleKey] : "",
-        desc: m.descKey ? (t.missions as Record<string, string>)[m.descKey] : ""
+        title: m.title, // Now comes from DB
+        desc: m.description, // Now comes from DB
     }));
 
     const firstName = profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || t.xpProgress.levelTitle_1;
@@ -217,7 +224,7 @@ export function DashboardContent({
                         currentStreak={profile.current_streak}
                         longestStreak={profile.longest_streak}
                     />
-                    <DailyMissions missions={missions} />
+                    <DailyMissions missions={missionsWithLabels} />
                 </div>
             </div>
         </div>

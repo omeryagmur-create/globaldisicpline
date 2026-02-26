@@ -2,6 +2,7 @@ import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import { RewardsService } from "@/services/RewardsService";
 
 export const metadata: Metadata = {
     title: "Dashboard - Global Discipline Engine",
@@ -83,6 +84,7 @@ async function getDashboardData() {
     ]);
 
     const ranking = (rankingResult.count || 0) + 1;
+    const rewardsDashboard = await RewardsService.getRewardsDashboard(supabase, user.id);
 
     return {
         user,
@@ -94,6 +96,7 @@ async function getDashboardData() {
         yesterdaySessions: yesterdaySessionsResult.data || [],
         ranking,
         totalUserCount: totalUserCountResult.count || 1,
+        missions: rewardsDashboard.missions
     };
 }
 
@@ -119,6 +122,7 @@ export default async function DashboardPage() {
             yesterdaySessions={data.yesterdaySessions}
             ranking={data.ranking}
             totalUserCount={data.totalUserCount}
+            missions={data.missions}
         />
     );
 }

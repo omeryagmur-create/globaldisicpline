@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { MissionEngine } from '@/lib/missionEngine';
 
 export interface RewardsDashboard {
     availableXP: number;
@@ -30,6 +31,7 @@ export interface RewardsDashboard {
         description: string;
         rewardXP: number;
         isClaimed: boolean;
+        progress: number;
     }[];
 }
 
@@ -84,10 +86,15 @@ export class RewardsService {
         // Calculate progress for each requirement type
         const stats = {
             early_sessions: 0,
-            daily_minutes: 0,
+            daily_minutes: 0, // Max in history for badges
+            morning_session: 0, // Today for morning_monk mission
+            total_minutes: 0, // Today's sum for deep_thinker mission
+            task_count: 0, // Today's tasks
             streak_days: profile?.longest_streak || 0,
-            helpful_actions: 0 // Placeholder
+            helpful_actions: 0
         };
+
+        const todayDate = new Date().toISOString().split('T')[0];
 
         if (sessions) {
             const dayMinutes = new Map<string, number>();
@@ -95,17 +102,36 @@ export class RewardsService {
                 const startDate = new Date(s.started_at);
                 const dateKey = startDate.toISOString().split('T')[0];
 
-                // Early sessions: hour < 8
+                // Early sessions: hour < 8 (for badges)
                 if (startDate.getHours() < 8) {
                     stats.early_sessions++;
                 }
 
-                // Daily minutes
-                dayMinutes.set(dateKey, (dayMinutes.get(dateKey) || 0) + s.duration_minutes);
+                // Today ONLY stats (for daily missions)
+                if (dateKey === todayDate) {
+                    // Morning session (before 9 AM for morning_monk)
+                    if (startDate.getHours() < 9) {
+                        stats.morning_session++;
+                    }
+                    stats.total_minutes += (s.duration_minutes || 0);
+                }
+
+                // Daily minutes map (for historic max)
+                dayMinutes.set(dateKey, (dayMinutes.get(dateKey) || 0) + (s.duration_minutes || 0));
             });
 
             stats.daily_minutes = Math.max(0, ...Array.from(dayMinutes.values()));
         }
+
+        // 5.5. Get Today's Task Count
+        const { count: tasksDoneToday } = await supabase
+            .from('daily_tasks')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('is_completed', true)
+            .gte('completed_at', todayDate);
+
+        stats.task_count = tasksDoneToday || 0;
 
         // 6. Get Mission Claims for today
         const today = new Date().toISOString().split('T')[0];
@@ -117,12 +143,45 @@ export class RewardsService {
 
         const claimedMissionIds = new Set(claims?.map(c => c.mission_id) || []);
 
-        // Daily Missions Definition (Source of Truth)
-        const missions = [
-            { id: "morning_monk", title: "Morning Monk", description: "Start a focus session before 9 AM", rewardXP: 200 },
-            { id: "deep_thinker", title: "Deep Thinker", description: "Focus for 2 hours total today", rewardXP: 500 },
-            { id: "planner_pro", title: "Planner Pro", description: "Mark 5 tasks as completed", rewardXP: 300 }
-        ];
+        // 6b. Fetch Daily Tasks for progress
+        const { data: completedTasks } = await supabase
+            .from('daily_tasks')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('is_completed', true)
+            .gte('completed_at', today + 'T00:00:00Z');
+
+        stats.task_count = completedTasks?.length || 0;
+
+        // 7. Get Mission Definitions (Source of Truth from DB)
+        const { data: missionDefs } = await supabase
+            .from('mission_definitions')
+            .select('*');
+
+        const missions = (missionDefs || []).map(m => {
+            const isClaimed = claimedMissionIds.has(m.id);
+            let progress = 0;
+
+            if (isClaimed) {
+                progress = 100;
+            } else {
+                progress = MissionEngine.calculateMissionProgress(
+                    m.id,
+                    m.requirement_type,
+                    m.requirement_value,
+                    stats
+                );
+            }
+
+            return {
+                id: m.id,
+                title: m.title,
+                description: m.description,
+                rewardXP: m.reward_xp,
+                isClaimed,
+                progress
+            };
+        });
 
         return {
             availableXP: Number(profile?.total_xp || 0),
@@ -177,13 +236,12 @@ export class RewardsService {
         return data;
     }
 
-    static async claimMission(supabase: SupabaseClient, userId: string, missionId: string, xpReward: number): Promise<any> {
+    static async claimMission(supabase: SupabaseClient, userId: string, missionId: string): Promise<any> {
         const today = new Date().toISOString().split('T')[0];
         const idempotencyKey = `claim:${userId}:${missionId}:${today}`;
         const { data, error } = await supabase.rpc('claim_mission_reward', {
             p_user_id: userId,
             p_mission_id: missionId,
-            p_xp_reward: xpReward,
             p_idempotency_key: idempotencyKey
         });
         if (error) throw error;
