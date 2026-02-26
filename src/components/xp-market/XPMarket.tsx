@@ -4,91 +4,96 @@ import { useUserStore } from "@/stores/useUserStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Gamepad2, Lock, Zap, Activity, Clock } from "lucide-react";
+import { Gamepad2, Lock, Zap, Activity, Clock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { TypoStriker } from "@/components/games/TypoStriker";
+import { RewardsDashboard } from "@/services/RewardsService";
 
 export function XPMarket() {
-    const { profile, addXP } = useUserStore();
-    const currentXP = profile?.total_xp || 0;
-    const [activeFeatures, setActiveFeatures] = useState<Record<string, number>>({});
+    const { profile, fetchProfile } = useUserStore();
+    const [dashboard, setDashboard] = useState<RewardsDashboard | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [now, setNow] = useState<number>(Date.now());
 
-    const [now, setNow] = useState<number>(0);
+    const loadDashboard = async () => {
+        try {
+            const res = await fetch("/api/rewards/dashboard");
+            if (!res.ok) throw new Error("Failed to fetch dashboard");
+            const data = await res.json();
+            setDashboard(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setTimeout(() => setNow(Date.now()), 0);
-        const interval = setInterval(() => {
-            const current = Date.now();
-            setNow(current);
-            setActiveFeatures(prev => {
-                const next = { ...prev };
-                let changed = false;
-                Object.keys(next).forEach(key => {
-                    if (next[key] < current) {
-                        delete next[key];
-                        changed = true;
-                    }
-                });
-                return changed ? next : prev;
-            });
-        }, 1000);
+        loadDashboard();
+        const interval = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(interval);
     }, []);
 
-    const items = [
-        {
-            id: 'sports_panel',
-            name: 'Live Sports Feed',
-            description: 'Unlock 60 minutes of real-time scores (Football & F1).',
-            cost: 500,
-            icon: Activity,
-            type: 'feature'
-        },
-        {
-            id: 'typo_game',
-            name: 'Typo Striker',
-            description: 'Fix typos fast to earn small XP boosts.',
-            cost: 200,
-            icon: Gamepad2,
-            type: 'game'
-        },
-        {
-            id: 'logic_puzzle',
-            name: 'Micro Logic',
-            description: 'Solve a logic puzzle in under 60 seconds.',
-            cost: 300,
-            icon: Zap,
-            type: 'game'
-        }
-    ];
+    const marketItems = dashboard?.catalog.filter(item =>
+        item.category === 'feature' || item.category === 'game'
+    ) || [];
 
-    const handleUnlock = (item: typeof items[0]) => {
-        if (currentXP < item.cost) {
+    const handleUnlock = async (rewardId: string, cost: number) => {
+        if (!profile) return;
+        if (profile.total_xp < cost) {
             toast.error("Insufficient Discipline (XP) to unlock.");
             return;
         }
 
-        // Deduct XP
-        addXP(-item.cost, `Unlocked ${item.name}`);
+        setProcessingId(rewardId);
+        try {
+            const idempotencyKey = `buy:${profile.id}:${rewardId}:${Date.now()}`;
+            const res = await fetch("/api/rewards/purchase", {
+                method: "POST",
+                body: JSON.stringify({ rewardId, idempotencyKey }),
+            });
+            const result = await res.json();
 
-        setActiveFeatures(prev => ({
-            ...prev,
-            [item.id]: Date.now() + 60 * 60 * 1000 // 60 minutes
-        }));
-
-        toast.success(`${item.name} activated for 60 minutes.`);
+            if (result.success) {
+                toast.success(result.message || "Purchase successful!");
+                await Promise.all([loadDashboard(), fetchProfile()]);
+            } else {
+                toast.error(result.message || "Purchase failed.");
+            }
+        } catch (error) {
+            toast.error("An error occurred during transaction.");
+        } finally {
+            setProcessingId(null);
+        }
     };
 
-    const getRemainingTime = (id: string) => {
-        const expiry = activeFeatures[id];
-        if (!expiry) return null;
-        const remaining = Math.max(0, expiry - now);
+    const getRemainingTime = (expiresAt: string | null) => {
+        if (!expiresAt) return null;
+        const remaining = Math.max(0, new Date(expiresAt).getTime() - now);
+        if (remaining === 0) return null;
         const mins = Math.floor(remaining / 60000);
         const secs = Math.floor((remaining % 60000) / 1000);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    const getIcon = (title: string) => {
+        if (title.includes('Sports')) return Activity;
+        if (title.includes('Typo')) return Gamepad2;
+        return Zap;
+    };
+
+    const currentXP = profile?.total_xp || 0;
+
+    if (loading && !dashboard) {
+        return (
+            <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -104,9 +109,10 @@ export function XPMarket() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-                {items.map((item) => {
-                    const timeLeft = getRemainingTime(item.id);
-                    const isActive = !!timeLeft;
+                {marketItems.map((item) => {
+                    const timeLeft = getRemainingTime(item.expiresAt);
+                    const isActive = item.isPurchased && !!timeLeft;
+                    const Icon = getIcon(item.title);
 
                     return (
                         <Card key={item.id} className={cn(
@@ -118,9 +124,9 @@ export function XPMarket() {
                                     "h-10 w-10 rounded-lg flex items-center justify-center mb-2 transition-transform",
                                     isActive ? "bg-primary text-primary-foreground scale-110" : "bg-muted group-hover:scale-110"
                                 )}>
-                                    <item.icon className="h-5 w-5" />
+                                    <Icon className="h-5 w-5" />
                                 </div>
-                                <CardTitle className="text-lg font-bold">{item.name}</CardTitle>
+                                <CardTitle className="text-lg font-bold">{item.title}</CardTitle>
                                 <CardDescription className="text-xs">{item.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="pt-2">
@@ -131,16 +137,19 @@ export function XPMarket() {
                                     </div>
                                 ) : (
                                     <Button
-                                        variant={currentXP >= item.cost ? "default" : "outline"}
+                                        variant={currentXP >= item.costXP ? "default" : "outline"}
                                         className="w-full font-black uppercase tracking-widest text-[10px]"
-                                        onClick={() => handleUnlock(item)}
+                                        onClick={() => handleUnlock(item.id, item.costXP)}
+                                        disabled={processingId === item.id}
                                     >
-                                        {currentXP >= item.cost ? (
-                                            <>Unlock for {item.cost} XP</>
+                                        {processingId === item.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : currentXP >= item.costXP ? (
+                                            <>Unlock for {item.costXP} XP</>
                                         ) : (
                                             <>
                                                 <Lock className="mr-2 h-3 w-3" />
-                                                Need {item.cost - currentXP} More
+                                                Need {item.costXP - currentXP} More
                                             </>
                                         )}
                                     </Button>
@@ -152,7 +161,7 @@ export function XPMarket() {
             </div>
 
             <div className="grid gap-8 md:grid-cols-2">
-                {activeFeatures['sports_panel'] && (
+                {dashboard?.catalog.find(i => i.title.includes('Sports') && i.isPurchased && getRemainingTime(i.expiresAt)) && (
                     <div className="p-6 rounded-2xl bg-black border border-primary/30 animate-in zoom-in duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -177,7 +186,7 @@ export function XPMarket() {
                     </div>
                 )}
 
-                {activeFeatures['typo_game'] && (
+                {dashboard?.catalog.find(i => i.title.includes('Typo') && i.isPurchased && getRemainingTime(i.expiresAt)) && (
                     <div className="animate-in zoom-in duration-300">
                         <TypoStriker />
                     </div>

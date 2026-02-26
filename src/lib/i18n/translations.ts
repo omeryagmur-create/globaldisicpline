@@ -481,6 +481,7 @@ export const translations = {
             cosmetic: 'Cosmetic',
             boost: 'Boost',
             music: 'Music',
+            purchased: 'Purchased',
         },
 
         // ─── Leagues ────────────────────────────────────────────────────────
@@ -978,6 +979,7 @@ export const translations = {
             cosmetic: 'Kozmetik',
             boost: 'Takviye',
             music: 'Müzik',
+            purchased: 'Satın Alındı',
         },
 
         // ─── Ligler ────────────────────────────────────────────────────────
