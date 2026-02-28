@@ -55,6 +55,9 @@ export default function ProfilePage() {
     const [targetDate, setTargetDate] = useState<Date | undefined>(undefined);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
+    const [badges, setBadges] = useState<any[]>([]);
+    const [loadingBadges, setLoadingBadges] = useState(true);
+
     const supabase = createClient();
     const router = useRouter();
 
@@ -67,8 +70,22 @@ export default function ProfilePage() {
             if (profile.target_exam_date) {
                 setTargetDate(new Date(profile.target_exam_date));
             }
+            loadBadges();
         }
     }, [profile]);
+
+    const loadBadges = async () => {
+        if (!profile) return;
+        try {
+            const { RewardsService } = await import("@/services/RewardsService");
+            const badgeData = await RewardsService.getBadgeProgress(supabase, profile.id);
+            setBadges(badgeData.filter(b => b.unlocked));
+        } catch (error) {
+            console.error("Error loading badges:", error);
+        } finally {
+            setLoadingBadges(false);
+        }
+    };
 
     const handleUpdateProfile = async () => {
         if (!profile) return;
@@ -187,6 +204,7 @@ export default function ProfilePage() {
                                     <p className="text-sm font-black text-violet-300">{currentLevel}</p>
                                     <p className="text-[9px] text-white/25 uppercase tracking-wider">{t.profile.statLevel}</p>
                                 </div>
+
                                 <div className="text-center p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                                     <div className="flex items-center justify-center gap-1 mb-1">
                                         <Zap className="h-3 w-3 text-indigo-400" />
@@ -203,6 +221,56 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Achievements / Badges Card */}
+                    <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.02] to-transparent p-5">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
+                            <div className="flex items-center gap-2">
+                                <Star className="h-4 w-4 text-amber-400" />
+                                <h3 className="text-sm font-bold text-white">{t.rewards.sectionBadges}</h3>
+                            </div>
+                            <button
+                                onClick={() => router.push('/rewards')}
+                                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider"
+                            >
+                                {t.rewards.viewAll}
+                            </button>
+                        </div>
+
+                        {loadingBadges ? (
+                            <div className="flex justify-center py-4">
+                                <div className="h-4 w-4 rounded-full border-2 border-white/10 border-t-indigo-500 animate-spin" />
+                            </div>
+                        ) : badges.length > 0 ? (
+                            <div className="grid grid-cols-4 gap-2">
+                                {badges.slice(0, 8).map((badge) => (
+                                    <div key={badge.id} className="group relative aspect-square rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center p-2 hover:bg-white/[0.06] transition-all">
+                                        <div className="absolute inset-0 bg-indigo-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        {badge.imageUrl ? (
+                                            <img src={badge.imageUrl} alt={badge.title} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Star className="w-6 h-6 text-indigo-400/50" />
+                                        )}
+                                        {/* Tooltip-like popup on hover */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[hsl(224,60%,5%)] border border-white/10 rounded-lg text-[9px] font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                                            {badge.title}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 px-2">
+                                <p className="text-xs text-white/20 mb-3 italic">No badges unlocked yet.</p>
+                                <Button
+                                    onClick={() => router.push('/rewards')}
+                                    variant="outline"
+                                    className="h-8 text-[10px] rounded-lg border-white/10 bg-white/[0.02]"
+                                >
+                                    Earn Your First Badge
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Danger Zone */}

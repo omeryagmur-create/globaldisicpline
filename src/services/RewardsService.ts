@@ -22,8 +22,10 @@ export interface RewardsDashboard {
         imageUrl: string | null;
         category: string;
         durationMinutes: number | null;
+        refreshMode: 'weekly' | 'permanent';
         isPurchased: boolean;
         expiresAt: string | null;
+        nextResetAt: string | null;
     }[];
     missions: {
         id: string;
@@ -36,6 +38,12 @@ export interface RewardsDashboard {
 }
 
 export class RewardsService {
+    static async getWeeklyKey(supabase: SupabaseClient): Promise<string> {
+        const { data, error } = await supabase.rpc('get_week_start_utc');
+        if (error) throw error;
+        return data as string;
+    }
+
     static async getDailyMissions(supabase: SupabaseClient, userId: string): Promise<RewardsDashboard['missions']> {
         const todayDate = new Date().toISOString().split('T')[0];
 
@@ -109,37 +117,59 @@ export class RewardsService {
     }
 
     static async getBadgeProgress(supabase: SupabaseClient, userId: string): Promise<RewardsDashboard['badges']> {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('longest_streak')
-            .eq('id', userId)
-            .single();
-
-        const [badgesRes, userBadgesRes, sessionsRes] = await Promise.all([
+        // 1. Fetch all necessary data in parallel
+        const [profileRes, badgesRes, userBadgesRes, sessionsRes, claimsRes, snapshotsRes] = await Promise.all([
+            supabase.from('profiles').select('longest_streak').eq('id', userId).single(),
             supabase.from('badge_definitions').select('*'),
             supabase.from('user_badges').select('badge_id').eq('user_id', userId),
-            supabase.from('focus_sessions').select('started_at, duration_minutes').eq('user_id', userId).eq('is_completed', true)
+            supabase.from('focus_sessions').select('started_at, duration_minutes').eq('user_id', userId).eq('is_completed', true),
+            supabase.from('daily_mission_claims').select('id, created_at').eq('user_id', userId),
+            supabase.rpc('get_active_season').then(async ({ data: season }) => {
+                if (!season?.[0]) return { data: null };
+                return supabase.from('league_snapshots').select('rank_overall').eq('user_id', userId).eq('season_id', (season[0] as any).id).maybeSingle();
+            })
         ]);
 
+        const profile = profileRes.data;
         const unlockedBadgeIds = new Set(userBadgesRes.data?.map(b => b.badge_id) || []);
 
+        // 2. Process stats
+        const now = new Date();
+        const activeDates = new Set<string>();
         const stats = {
             early_sessions: 0,
             daily_minutes: 0,
+            total_focus_minutes: 0,
             streak_days: profile?.longest_streak || 0,
-            helpful_actions: 0 // TODO: Track in DB
+            total_tasks: 0, // Will be filled from sessions logic if counting completions
+            mission_claims: claimsRes.data?.length || 0,
+            league_rank: snapshotsRes.data?.rank_overall || 999999, // Lower is better for rank
+            active_days_7: 0,
+            active_days_30: 0
         };
 
-        if (sessionsRes.data) {
-            const dayMinutes = new Map<string, number>();
-            sessionsRes.data.forEach(s => {
-                const startDate = new Date(s.started_at);
-                const dateKey = startDate.toISOString().split('T')[0];
-                if (startDate.getHours() < 8) stats.early_sessions++;
-                dayMinutes.set(dateKey, (dayMinutes.get(dateKey) || 0) + (s.duration_minutes || 0));
-            });
-            stats.daily_minutes = Math.max(0, ...Array.from(dayMinutes.values()));
-        }
+        const dayMinutes = new Map<string, number>();
+        (sessionsRes.data || []).forEach(s => {
+            const startDate = new Date(s.started_at);
+            const dateKey = startDate.toISOString().split('T')[0];
+            activeDates.add(dateKey);
+
+            if (startDate.getHours() < 9) stats.early_sessions++;
+            stats.total_focus_minutes += (s.duration_minutes || 0);
+            dayMinutes.set(dateKey, (dayMinutes.get(dateKey) || 0) + (s.duration_minutes || 0));
+        });
+
+        stats.daily_minutes = dayMinutes.size > 0 ? Math.max(...Array.from(dayMinutes.values())) : 0;
+
+        // Active days count
+        const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(now.getDate() - 7);
+        const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(now.getDate() - 30);
+
+        activeDates.forEach(dateStr => {
+            const d = new Date(dateStr);
+            if (d >= sevenDaysAgo) stats.active_days_7++;
+            if (d >= thirtyDaysAgo) stats.active_days_30++;
+        });
 
         return (badgesRes.data || []).map(b => {
             const isUnlocked = unlockedBadgeIds.has(b.id);
@@ -148,7 +178,7 @@ export class RewardsService {
             if (isUnlocked) {
                 progress = 100;
             } else {
-                const currentVal = (stats as any)[b.requirement_type] || 0;
+                const currentVal = (stats as any)[b.requirement_type] ?? 0;
                 progress = Math.min(100, Math.floor((currentVal / b.requirement_value) * 100));
             }
 
@@ -167,26 +197,36 @@ export class RewardsService {
     }
 
     static async getRewardsDashboard(supabase: SupabaseClient, userId: string): Promise<RewardsDashboard> {
-        // 1. Get profile XP
+        // 1. Get current week key from DB to ensure sync
+        const currentWeekKey = await this.getWeeklyKey(supabase);
+        const nextResetAtDate = new Date(currentWeekKey);
+        nextResetAtDate.setDate(nextResetAtDate.getDate() + 7);
+        const nextResetAt = nextResetAtDate.toISOString();
+
+        // 2. Get profile XP
         const { data: profile } = await supabase
             .from('profiles')
             .select('total_xp')
             .eq('id', userId)
             .single();
 
-        // 2. Get modular parts
+        // 3. Get modular parts
         const [missions, badges, catalogRes, purchasesRes] = await Promise.all([
             this.getDailyMissions(supabase, userId),
             this.getBadgeProgress(supabase, userId),
             supabase.from('reward_catalog').select('*').eq('is_active', true).order('cost_xp', { ascending: true }),
-            supabase.from('user_reward_purchases').select('reward_id, expires_at').eq('user_id', userId)
+            supabase.from('user_reward_purchases').select('reward_id, expires_at, week_key').eq('user_id', userId)
         ]);
 
         const now = new Date();
-        const activePurchases = new Map<string, string | null>();
+        const permanentPurchases = new Set<string>();
+        const weeklyPurchases = new Map<string, string | null>(); // rewardId -> expires_at
+
         (purchasesRes.data || []).forEach(p => {
-            if (!p.expires_at || new Date(p.expires_at) > now) {
-                activePurchases.set(p.reward_id, p.expires_at);
+            if (p.week_key === null) {
+                permanentPurchases.add(p.reward_id);
+            } else if (p.week_key === currentWeekKey) {
+                weeklyPurchases.set(p.reward_id, p.expires_at);
             }
         });
 
@@ -194,17 +234,32 @@ export class RewardsService {
             availableXP: Number(profile?.total_xp || 0),
             badges,
             missions,
-            catalog: (catalogRes.data || []).map(r => ({
-                id: r.id,
-                title: r.title,
-                description: r.description,
-                costXP: r.cost_xp,
-                category: r.category,
-                imageUrl: r.image_url,
-                durationMinutes: r.duration_minutes,
-                isPurchased: activePurchases.has(r.id),
-                expiresAt: activePurchases.get(r.id) || null
-            }))
+            catalog: (catalogRes.data || []).map(r => {
+                const isWeekly = r.refresh_mode === 'weekly';
+                let isPurchased = false;
+                let expiresAt = null;
+
+                if (isWeekly) {
+                    isPurchased = weeklyPurchases.has(r.id);
+                    expiresAt = weeklyPurchases.get(r.id) || null;
+                } else {
+                    isPurchased = permanentPurchases.has(r.id);
+                }
+
+                return {
+                    id: r.id,
+                    title: r.title,
+                    description: r.description,
+                    costXP: r.cost_xp,
+                    category: r.category,
+                    imageUrl: r.image_url,
+                    durationMinutes: r.duration_minutes,
+                    refreshMode: r.refresh_mode as 'weekly' | 'permanent',
+                    isPurchased,
+                    expiresAt,
+                    nextResetAt: isWeekly ? nextResetAt : null
+                };
+            })
         };
     }
 

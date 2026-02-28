@@ -496,6 +496,12 @@ export const translations = {
             claimSuccess: 'Reward Claimed!',
             claimFailed: 'Failed to claim.',
             xpEarned: '+{count} XP Earned!',
+            weekly: 'Weekly',
+            permanent: 'Permanent',
+            weeklyRefresh: 'Weekly Refresh',
+            nextWeek: 'Next Week',
+            itemRefreshInfo: 'This item refreshes every Monday.',
+            alreadyPurchasedThisWeek: 'Already purchased this week.',
         },
 
         // ─── Leagues ────────────────────────────────────────────────────────
@@ -1008,6 +1014,12 @@ export const translations = {
             claimSuccess: 'Ödül Alındı!',
             claimFailed: 'Ödül alınamadı.',
             xpEarned: '+{count} XP Kazandın!',
+            weekly: 'Haftalık',
+            permanent: 'Kalıcı',
+            weeklyRefresh: 'Haftalık Yenilenme',
+            nextWeek: 'Gelecek Hafta',
+            itemRefreshInfo: 'Bu ürün her Pazartesi yenilenir.',
+            alreadyPurchasedThisWeek: 'Bu hafta zaten alındı.',
         },
 
         // ─── Ligler ────────────────────────────────────────────────────────

@@ -32,6 +32,7 @@ export default function RewardsPage() {
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [resetTime, setResetTime] = useState<string>("");
+    const [weeklyResetTime, setWeeklyResetTime] = useState<string>("");
 
     const loadDashboard = async () => {
         try {
@@ -50,26 +51,41 @@ export default function RewardsPage() {
     useEffect(() => {
         loadDashboard();
 
-        // Daily Reset Timer Logic
-        const updateTimer = () => {
+        // Timer Logic
+        const updateTimers = () => {
             const now = new Date();
+
+            // Daily Reset
             const tomorrow = new Date(now);
             tomorrow.setHours(24, 0, 0, 0);
-            const diff = tomorrow.getTime() - now.getTime();
+            const dailyDiff = tomorrow.getTime() - now.getTime();
+            setResetTime(formatDuration(dailyDiff));
 
-            const hours = Math.floor(diff / (1000 * 60 * 60));
+            // Weekly Reset (Monday 00:00 UTC)
+            // find next monday
+            const nextMonday = new Date(now);
+            nextMonday.setUTCDate(now.getUTCDate() + ((7 - now.getUTCDay() + 1) % 7 || 7));
+            nextMonday.setUTCHours(0, 0, 0, 0);
+            const weeklyDiff = nextMonday.getTime() - now.getTime();
+            setWeeklyResetTime(formatDuration(weeklyDiff, true));
+        };
+
+        const formatDuration = (diff: number, showDays = false) => {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
+            const d = days > 0 && showDays ? `${days}d ` : "";
             const h = hours > 0 ? `${hours}h ` : "";
             const m = minutes > 0 ? `${minutes}m ` : "";
             const s = `${seconds}s`;
 
-            setResetTime(`${h}${m}${s}`);
+            return `${d}${h}${m}${s}`;
         };
 
-        updateTimer();
-        const interval = setInterval(updateTimer, 1000);
+        updateTimers();
+        const interval = setInterval(updateTimers, 1000);
         return () => clearInterval(interval);
     }, []);
 
@@ -219,7 +235,11 @@ export default function RewardsPage() {
                                 !badge.unlocked && "opacity-80 grayscale-[0.5]"
                             )}>
                                 <div className={cn("h-40 flex items-center justify-center relative", colors.bg)}>
-                                    <Icon className={cn("h-16 w-16 transition-transform group-hover:scale-110", colors.text)} />
+                                    {badge.imageUrl ? (
+                                        <img src={badge.imageUrl} alt={badge.title} className="h-24 w-24 object-contain transition-transform group-hover:scale-110" />
+                                    ) : (
+                                        <Icon className={cn("h-16 w-16 transition-transform group-hover:scale-110", colors.text)} />
+                                    )}
                                     {badge.unlocked ? (
                                         <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-lg">
                                             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -232,7 +252,7 @@ export default function RewardsPage() {
                                 </div>
                                 <CardHeader className="text-center">
                                     <CardTitle className="text-lg">{badge.title}</CardTitle>
-                                    <CardDescription className="text-xs">{badge.description}</CardDescription>
+                                    <CardDescription className="text-xs h-8 line-clamp-2">{badge.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
@@ -250,15 +270,20 @@ export default function RewardsPage() {
             {/* Shop Section */}
             <section className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold">{t.rewards.sectionShop}</h3>
+                    <div className="space-y-1">
+                        <h3 className="text-2xl font-bold">{t.rewards.sectionShop}</h3>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5" /> {t.rewards.weeklyRefresh}: <span className="font-mono text-primary font-bold">{weeklyResetTime}</span>
+                        </p>
+                    </div>
                     <div className="flex items-center gap-2 text-primary font-bold">
                         <Gift className="h-5 w-5" /> {t.rewards.shopSubtitle}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {dashboard?.catalog.map((item) => {
-                        // @ts-ignore - 'purchased' exists but TS might be lagging on translations.ts update
-                        const purchasedLabel = t.rewards.purchased || "Purchased";
+                        const isPurchased = item.isPurchased;
+                        const isWeekly = item.refreshMode === "weekly";
 
                         return (
                             <Card key={item.id} className="group overflow-hidden border-2 border-transparent hover:border-primary/20 transition-all duration-300">
@@ -270,39 +295,54 @@ export default function RewardsPage() {
                                             <Gift className="h-12 w-12 text-muted-foreground/30" />
                                         </div>
                                     )}
-                                    <div className="absolute top-4 left-4">
-                                        <Badge className="bg-white/90 text-black border-none hover:bg-white capitalize">{item.category}</Badge>
+                                    <div className="absolute top-4 left-4 flex gap-2">
+                                        <Badge className="bg-white/90 text-black border-none hover:bg-white capitalize tracking-tighter">{item.category}</Badge>
+                                        <Badge variant={isWeekly ? "default" : "secondary"} className="font-bold">
+                                            {isWeekly ? t.rewards.weekly : t.rewards.permanent}
+                                        </Badge>
                                     </div>
-                                    {item.isPurchased && (
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                                            <Badge variant="secondary" className="scale-125 font-bold uppercase tracking-widest">{purchasedLabel}</Badge>
+                                    {isPurchased && (
+                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[2px] transition-all group-hover:backdrop-blur-[1px]">
+                                            <Badge variant="secondary" className="scale-125 font-bold uppercase tracking-widest">
+                                                {isWeekly ? "ALINDI" : "SAHİPSİN"}
+                                            </Badge>
+                                            {isWeekly && (
+                                                <p className="text-[10px] text-white/70 font-bold mt-4 uppercase tracking-tighter">
+                                                    {t.rewards.nextWeek} Tekrar Alınabilir
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
                                 <CardHeader>
-                                    <CardTitle className="text-xl group-hover:text-primary transition-colors">{item.title}</CardTitle>
+                                    <div className="flex justify-between items-start">
+                                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{item.title}</CardTitle>
+                                    </div>
                                     <div className="flex items-center gap-2 mt-2">
                                         <div className="p-1 rounded-full bg-primary/10">
                                             <Zap className="h-4 w-4 text-primary fill-primary" />
                                         </div>
                                         <span className="font-black text-lg">{item.costXP.toLocaleString()} XP</span>
                                     </div>
-                                    {item.durationMinutes && (
-                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                                            <Clock className="h-3 w-3" />
-                                            <span>{item.durationMinutes} {t.common.minutes}</span>
-                                        </div>
-                                    )}
+                                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2 h-10">{item.description}</p>
                                 </CardHeader>
-                                <CardFooter>
+                                <CardFooter className="flex flex-col gap-3">
                                     <Button
-                                        className="w-full rounded-xl h-12 text-lg font-bold"
+                                        className="w-full rounded-xl h-11 text-md font-bold"
                                         onClick={() => handlePurchase(item.id, item.costXP)}
-                                        disabled={item.isPurchased || processingId === item.id}
+                                        disabled={isPurchased || processingId === item.id}
                                     >
                                         {processingId === item.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        {item.isPurchased ? purchasedLabel : t.rewards.purchaseButton}
+                                        {isPurchased
+                                            ? (isWeekly ? t.rewards.alreadyPurchasedThisWeek : t.rewards.purchased)
+                                            : `${t.rewards.unlockFor} ${item.costXP} XP`
+                                        }
                                     </Button>
+                                    {isWeekly && !isPurchased && (
+                                        <p className="text-[9px] text-muted-foreground text-center uppercase tracking-wider font-medium">
+                                            {t.rewards.itemRefreshInfo}
+                                        </p>
+                                    )}
                                 </CardFooter>
                             </Card>
                         );
