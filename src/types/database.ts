@@ -31,6 +31,8 @@ export interface Database {
                     subscription_tier: string
                     is_admin: boolean
                     experiments: Json | null
+                    active_theme: string | null
+                    active_border: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -51,6 +53,8 @@ export interface Database {
                     tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
+                    active_theme?: string | null
+                    active_border?: string | null
                     experiments?: Json | null
                     created_at?: string
                     updated_at?: string
@@ -72,6 +76,8 @@ export interface Database {
                     tier?: string /* @deprecated use current_league instead */
                     subscription_tier?: string
                     is_admin?: boolean
+                    active_theme?: string | null
+                    active_border?: string | null
                     experiments?: Json | null
                     created_at?: string
                     updated_at?: string

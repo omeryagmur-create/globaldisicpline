@@ -21,7 +21,9 @@ import {
     Zap,
     Star,
     Crown,
-    Share2
+    Share2,
+    Palette,
+    LayoutTemplate
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,9 @@ export default function ProfilePage() {
 
     const [badges, setBadges] = useState<any[]>([]);
     const [loadingBadges, setLoadingBadges] = useState(true);
+    const [unlockedCosmetics, setUnlockedCosmetics] = useState<any[]>([]);
+    const [activeTheme, setActiveTheme] = useState<string>("default");
+    const [activeBorder, setActiveBorder] = useState<string>("default");
 
     const supabase = createClient();
     const router = useRouter();
@@ -70,18 +75,24 @@ export default function ProfilePage() {
             if (profile.target_exam_date) {
                 setTargetDate(new Date(profile.target_exam_date));
             }
-            loadBadges();
+            setActiveTheme(profile.active_theme || "default");
+            setActiveBorder(profile.active_border || "default");
+            loadBadgesAndCosmetics();
         }
     }, [profile]);
 
-    const loadBadges = async () => {
+    const loadBadgesAndCosmetics = async () => {
         if (!profile) return;
         try {
             const { RewardsService } = await import("@/services/RewardsService");
-            const badgeData = await RewardsService.getBadgeProgress(supabase, profile.id);
+            const [badgeData, dashboardData] = await Promise.all([
+                RewardsService.getBadgeProgress(supabase, profile.id),
+                RewardsService.getRewardsDashboard(supabase, profile.id)
+            ]);
             setBadges(badgeData.filter(b => b.unlocked));
+            setUnlockedCosmetics(dashboardData.catalog.filter(c => c.isPurchased && c.category === 'cosmetic'));
         } catch (error) {
-            console.error("Error loading badges:", error);
+            console.error("Error loading data:", error);
         } finally {
             setLoadingBadges(false);
         }
@@ -100,6 +111,8 @@ export default function ProfilePage() {
                     country: country,
                     exam_system: examSystem,
                     target_exam_date: targetDate?.toISOString().split('T')[0],
+                    active_theme: activeTheme === "default" ? null : activeTheme,
+                    active_border: activeBorder === "default" ? null : activeBorder,
                     updated_at: new Date().toISOString(),
                 })
                 .eq("id", profile.id);
@@ -179,7 +192,7 @@ export default function ProfilePage() {
                             {/* Avatar */}
                             <div className="relative">
                                 <div className="absolute -inset-1 bg-gradient-to-br from-indigo-500/30 to-violet-500/30 rounded-full blur-md" />
-                                <Avatar className="w-24 h-24 border-2 border-indigo-500/30 relative z-10">
+                                <Avatar className="w-24 h-24 border-2 border-indigo-500/30 relative z-10 user-avatar-border">
                                     <AvatarImage src={avatarUrl} />
                                     <AvatarFallback className="text-2xl font-black bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-300">
                                         {(fullName || profile?.email || "U").charAt(0).toUpperCase()}
@@ -405,6 +418,57 @@ export default function ProfilePage() {
                                         />
                                     </PopoverContent>
                                 </Popover>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Customization */}
+                    <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.02] to-transparent p-5">
+                        <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-white/[0.06]">
+                            <div className="h-8 w-8 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+                                <Palette className="h-4 w-4 text-pink-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-white">Customization</h3>
+                                <p className="text-xs text-white/30">Select themes and borders you've unlocked from the Rewards Shop.</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                                    <LayoutTemplate className="h-3.5 w-3.5" /> Active Theme
+                                </Label>
+                                <Select value={activeTheme} onValueChange={setActiveTheme}>
+                                    <SelectTrigger className="bg-white/[0.04] border-white/10 focus:border-indigo-500/50 rounded-xl h-11 text-white">
+                                        <SelectValue placeholder="Select a theme..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-[hsl(224,60%,5%)] border border-white/10 rounded-xl">
+                                        <SelectItem value="default">Default Dark</SelectItem>
+                                        {unlockedCosmetics.filter(c => c.title.toLowerCase().includes("theme")).map(c => (
+                                            <SelectItem key={c.id} value={c.title.replace(' Theme', '').replace('Premium Theme: ', '').toLowerCase().replace(' ', '-')}>
+                                                {c.title.replace('Premium Theme: ', '')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Crown className="h-3.5 w-3.5" /> Profile Border
+                                </Label>
+                                <Select value={activeBorder} onValueChange={setActiveBorder}>
+                                    <SelectTrigger className="bg-white/[0.04] border-white/10 focus:border-indigo-500/50 rounded-xl h-11 text-white">
+                                        <SelectValue placeholder="Select a border..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-[hsl(224,60%,5%)] border border-white/10 rounded-xl">
+                                        <SelectItem value="default">None</SelectItem>
+                                        {unlockedCosmetics.filter(c => c.title.toLowerCase().includes("border")).map(c => (
+                                            <SelectItem key={c.id} value={c.title.replace(' Profile Border', '').toLowerCase().replace(' ', '-')}>
+                                                {c.title.replace(' Profile Border', '')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>

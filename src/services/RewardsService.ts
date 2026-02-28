@@ -38,10 +38,29 @@ export interface RewardsDashboard {
 }
 
 export class RewardsService {
+    private static computeWeekStartUTC(date: Date): string {
+        const utcDay = date.getUTCDay();
+        const diffToMonday = utcDay === 0 ? -6 : 1 - utcDay;
+        const monday = new Date(Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate() + diffToMonday,
+            0, 0, 0, 0
+        ));
+        return monday.toISOString().split('T')[0];
+    }
+
     static async getWeeklyKey(supabase: SupabaseClient): Promise<string> {
+        const fallback = this.computeWeekStartUTC(new Date());
         const { data, error } = await supabase.rpc('get_week_start_utc');
-        if (error) throw error;
-        return data as string;
+
+        if (error) return fallback;
+
+        if (typeof data === 'string' && !Number.isNaN(new Date(data).getTime())) {
+            return data;
+        }
+
+        return fallback;
     }
 
     static async getDailyMissions(supabase: SupabaseClient, userId: string): Promise<RewardsDashboard['missions']> {

@@ -1,0 +1,40 @@
+/* ============================================================
+   CUSTOM THEMES (Rewards)
+   ============================================================ */
+[data-custom-theme="vaporwave"] {
+    --background: 280 60% 8%;
+    --foreground: 300 100% 90%;
+    --card: 280 50% 12%;
+    --card-foreground: 300 100% 90%;
+    --primary: 320 80% 60%;
+    --border: 290 50% 25%;
+    --sidebar: 280 50% 10%;
+    --sidebar-border: 290 50% 25%;
+    --ring: 320 80% 60%;
+}
+
+[data-custom-theme="deep-focus"] {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 95%;
+    --primary: 220 10% 40%;
+    --border: 0 0% 15%;
+    --sidebar: 0 0% 2%;
+    --sidebar-border: 0 0% 15%;
+    --ring: 220 10% 40%;
+}
+
+/* Custom Profile Borders */
+/* We target standard elements that might contain avatars */
+[data-custom-border="neon-glow"] .user-avatar-border::after,
+[data-custom-border="neon-glow"] [role="img"]::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid #f0f;
+    box-shadow: 0 0 10px #f0f, inset 0 0 10px #f0f;
+    pointer-events: none;
+    z-index: 20;
+}

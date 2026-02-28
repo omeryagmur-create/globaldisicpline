@@ -27,7 +27,21 @@ export class FocusService {
         getTranslations: () => { title: string }
     ): Promise<{ xpEarned: number } | null> {
         const durationMinutes = Math.floor(initialTimeSeconds / 60);
-        const xpEarned = this.calculateXP(durationMinutes, sessionType);
+        let xpEarned = this.calculateXP(durationMinutes, sessionType);
+
+        try {
+            // Check for active booster
+            const { RewardsService } = await import('@/services/RewardsService');
+            const dashboard = await RewardsService.getRewardsDashboard(supabase, userId);
+            const hasBooster = dashboard.catalog.some(c => c.category === 'boost' && c.isPurchased);
+
+            if (hasBooster) {
+                // Apply a 1.25x multiplier for active booster
+                xpEarned = Math.round(xpEarned * 1.25);
+            }
+        } catch (error) {
+            logger.error('Failed to check boosters', error);
+        }
 
         try {
             // 1. Save main session
